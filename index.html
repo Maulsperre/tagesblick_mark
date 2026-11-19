@@ -4,6 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Tagesblick</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#110B08">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <script>
 /* Aussehen (Design, Schrift, Größe) steht nur auf dem Gerät und wird vor dem Zeichnen gesetzt. */
 window.TB_FONTS = {
@@ -471,6 +476,7 @@ html[data-theme="ueberraschung"] .editbtn:hover, html[data-theme="ueberraschung"
         <span class="chip" id="next" hidden></span>
         <a class="chip link" id="lGmail" href="https://mail.google.com/" target="_blank" rel="noopener">Gmail ↗</a>
         <a class="chip link" id="lKal" href="https://calendar.google.com/" target="_blank" rel="noopener">Kalender ↗</a>
+        <button class="chip link" type="button" id="fsBtn" hidden>Vollbild</button>
         <button class="chip link setbtn" type="button" id="setBtn" aria-expanded="false">Design</button>
         <button class="chip link setsrc" type="button" id="srcBtn">Datenquelle</button>
         <span class="seg" role="group" aria-label="Ansicht der nächsten 14 Tage">
@@ -946,6 +952,23 @@ window.tagesblickInit = function () {
   $('fontSel').addEventListener('change', function () { window.TB_LOOK({ font: $('fontSel').value }); });
   $('sizeRng').addEventListener('input', function () { window.TB_LOOK({ size: Number($('sizeRng').value) }); $('sizeVal').textContent = $('sizeRng').value + '%'; });
   $('lookReset').addEventListener('click', function () { window.TB_LOOK({ theme: 'kupfer', font: '', size: 100 }); paint(); });
+})();
+</script>
+<script>
+/* Vollbild-Knopf: nur im Browser; als installierte App startet Tagesblick ohnehin im Vollbild (manifest.json). */
+(function () {
+  var b = document.getElementById('fsBtn'), d = document, el = d.documentElement;
+  var app = window.matchMedia && (matchMedia('(display-mode: fullscreen)').matches || matchMedia('(display-mode: standalone)').matches);
+  var req = el.requestFullscreen || el.webkitRequestFullscreen;
+  if (!b || app || !req) return;
+  function isFs() { return !!(d.fullscreenElement || d.webkitFullscreenElement); }
+  function label() { b.textContent = isFs() ? 'Vollbild aus' : 'Vollbild'; }
+  b.hidden = false;
+  b.addEventListener('click', function () {
+    if (isFs()) (d.exitFullscreen || d.webkitExitFullscreen).call(d);
+    else { var r = req.call(el); if (r && r.catch) r.catch(function () {}); }
+  });
+  d.addEventListener('fullscreenchange', label); d.addEventListener('webkitfullscreenchange', label);
 })();
 </script>
 <script>
