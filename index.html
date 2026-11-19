@@ -174,6 +174,7 @@ input[type="checkbox"]:checked::after { content: ""; width: 10px; height: 5px; b
 .radar .core { fill: var(--accent); }
 .radar .corering { fill: none; stroke: var(--accent); stroke-width: 1; opacity: .6; }
 .radar .blip { fill: var(--c); filter: drop-shadow(0 0 6px var(--c)); }
+.radar .blip.star { stroke: var(--bg, #110B08); stroke-width: .6; stroke-linejoin: round; }
 .radar .halo { fill: none; stroke: var(--c); stroke-width: 1; opacity: .55; }
 .radar .lbl { fill: var(--ink); font-family: var(--display); font-weight: 600; font-size: 13px; }
 .radar .sub { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
@@ -583,13 +584,23 @@ window.tagesblickInit = function () {
     var t = a * Math.PI / 180, r = rad(n);
     var x = CX + r * Math.cos(t), y = CY + r * Math.sin(t);
     var left = Math.cos(t) < 0, tx = x + (left ? -13 : 13);
+    var rec = e.wochentag != null, mark;
+    if (rec) {
+      var pts = [];
+      for (var k = 0; k < 10; k++) { var ang = -Math.PI / 2 + k * Math.PI / 5, rr = k % 2 ? 3.4 : 8; pts.push((x + rr * Math.cos(ang)).toFixed(1) + ',' + (y + rr * Math.sin(ang)).toFixed(1)); }
+      mark = '<polygon class="blip star" points="' + pts.join(' ') + '"/>';
+    } else mark = '<circle class="blip" cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="4.5"/>';
     return '<g data-who="' + esc(e.wer) + '" style="--c:' + esc(col(e.wer)) + '"><circle class="halo" cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="9"/>' +
-      '<circle class="blip" cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="4.5"/>' +
+      mark +
       '<text class="lbl" x="' + tx.toFixed(1) + '" y="' + (y + 1).toFixed(1) + '" text-anchor="' + (left ? 'end' : 'start') + '">' + esc(e.kurz || e.titel) + '</text>' +
       '<text class="sub" x="' + tx.toFixed(1) + '" y="' + (y + 14).toFixed(1) + '" text-anchor="' + (left ? 'end' : 'start') + '">' + esc(sub) + '</text></g>';
   }
   var radarItems = [];
-  for (var rn = 1; rn <= 14; rn++) { E.filter(function (e) { return e.bis ? e.datum && diff(e.datum) === this.n : occurs(e, this.n); }, { n: rn }).forEach(function (e) { radarItems.push({ e: e, n: rn }); }); }
+  var seenRec = {};
+  for (var rn = 1; rn <= 14; rn++) { E.filter(function (e) { return e.bis ? e.datum && diff(e.datum) === this.n : occurs(e, this.n); }, { n: rn }).forEach(function (e) {
+    if (e.wochentag != null) { if (seenRec[e.id]) return; seenRec[e.id] = 1; } /* Wiederkehrendes nur einmal: der nächste Termin */
+    radarItems.push({ e: e, n: rn });
+  }); }
   $('radar').innerHTML = '<svg class="radar" viewBox="0 0 460 360" role="img" aria-label="Radar der nächsten 14 Tage. Je näher ein Punkt an der Mitte liegt, desto früher ist der Termin.">' +
     '<line class="axis" x1="' + (CX - 160) + '" y1="' + CY + '" x2="' + (CX + 160) + '" y2="' + CY + '"/>' +
     '<line class="axis" x1="' + CX + '" y1="' + (CY - 160) + '" x2="' + CX + '" y2="' + (CY + 160) + '"/>' +
@@ -600,7 +611,7 @@ window.tagesblickInit = function () {
     '<text class="ringlabel" x="' + (CX + 5) + '" y="' + (CY + rad(14) - 5).toFixed(1) + '">14 TAGE</text>' +
     '<circle class="corering" cx="' + CX + '" cy="' + CY + '" r="10"/><circle class="core" cx="' + CX + '" cy="' + CY + '" r="4"/>' +
     radarItems.map(function (r, i) { return blip(r.e, r.n, r.n === 1 ? 'morgen' : r.n + ' Tage', i); }).join('') + '</svg>';
-  $('legend').innerHTML = Object.keys(P).map(who).join('');
+  $('legend').innerHTML = Object.keys(P).map(who).join('') + '<span class="who"><span style="color:var(--bronze,#C9A25F)">★</span>wiederkehrend</span>';
 
   /* Posteingang: nur Anzeige. Für eine Antwort kopierst du einen fertigen Auftrag in Claude oder ChatGPT. */
   var mail = D.post || [];
