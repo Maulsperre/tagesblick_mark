@@ -25,7 +25,7 @@ window.TB_LOOK = function (set) {
 };
 window.TB_LOOK();
 </script>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=JetBrains+Mono:wght@400;500&family=Sora:wght@400;500;600&family=Playfair+Display:wght@500;600;700&family=Lora:wght@400;500;600&family=Libre+Baskerville:wght@400;700&family=Inter:wght@400;500;600&family=Orbitron:wght@500;600;700&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&family=Exo+2:wght@400;500;600;700&family=Antonio:wght@400;600;700&family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&family=IBM+Plex+Mono:wght@400;500&family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=JetBrains+Mono:wght@400;500&family=Sora:wght@400;500;600&family=Playfair+Display:wght@500;600;700&family=Lora:wght@400;500;600&family=Libre+Baskerville:wght@400;700&family=Inter:wght@400;500;600&family=Orbitron:wght@500;600;700&family=Rajdhani:wght@500;600;700&family=Share+Tech+Mono&family=Exo+2:wght@400;500;600;700&family=Antonio:wght@400;600;700&family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&family=IBM+Plex+Mono:wght@400;500&family=Atkinson+Hyperlegible:wght@400;700&family=Chakra+Petch:wght@500;600;700&display=swap">
 <style>
 /* Layout: Terminal. Links eine Leiste mit Personenfilter, rechts Kopfzeile und ein Raster aus gleich gebauten Modulen, die sich im Anordnen-Modus verschieben und verbreitern lassen. Bewusst nur dunkel. */
 :root {
@@ -367,7 +367,7 @@ textarea { font-size: 13px; }
 @media (min-width: 1200px) and (min-height: 560px) { .shell { height: calc(100% / var(--z)); } }
 
 /* ===== Designs. Jedes Design setzt nur Variablen; Enterprise und Überraschung ändern zusätzlich die Form. ===== */
-html[data-theme="blau"] { --bg:#0A1020; --panel:rgba(110,160,255,.06); --panel-2:rgba(110,160,255,.12); --line:rgba(120,165,255,.24); --ink:#E8EEFB; --muted:#8FA0BF; --accent:#5AA2FF; --accent-2:#8FD3FF; --accent-3:#8FD3FF; --glow:rgba(90,162,255,.4); --scrim:rgba(4,8,18,.76); --bg1:rgba(90,162,255,.18); --bg2:rgba(143,211,255,.08); --gridc:rgba(120,165,255,.04); --ich:#5AA2FF; --familie:#9DB0CF; }
+html[data-theme="blau"] { --bg:#060A13; --panel:rgba(120,165,255,.06); --panel-2:rgba(120,165,255,.10); --line:rgba(130,190,255,.17); --ink:#E8F1FF; --muted:#8C9DBA; --accent:#45E0FF; --accent-2:#A88BFF; --accent-3:#A88BFF; --glow:rgba(69,224,255,.45); --scrim:rgba(3,6,12,.72); --akut:#FF5D7D; --bald:#FFC555; --ruhig:#4DE5A5; --luise:#B79CFF; --pauline:#FF8CC6; --ich:#45E0FF; --familie:#9FB0CC; --bg1:rgba(69,224,255,.13); --bg2:rgba(168,139,255,.12); --gridc:rgba(130,190,255,.035); --display:"Chakra Petch","Sora",system-ui,sans-serif; --body:"Sora",system-ui,sans-serif; }
 
 html[data-theme="pergament"] { color-scheme:light; --bg:#F3EBDA; --panel:rgba(110,80,40,.06); --panel-2:rgba(110,80,40,.12); --line:rgba(110,80,40,.30); --ink:#2A1F14; --muted:#6E5A44; --accent:#8A2B2B; --accent-2:#9A7424; --accent-3:#9A7424; --glow:rgba(138,43,43,.16); --scrim:rgba(60,45,25,.5); --akut:#B3261E; --bald:#A8690F; --ruhig:#3E7D3A; --luise:#7B4BA6; --pauline:#C0476E; --ich:#8A2B2B; --familie:#6E5A44; --bg1:rgba(154,116,36,.14); --bg2:rgba(138,43,43,.06); --gridc:rgba(110,80,40,.045); --display:"Playfair Display",Georgia,serif; --body:"Lora",Georgia,serif; --mono:"IBM Plex Mono",Consolas,monospace; }
 html[data-theme="pergament"] .dot { box-shadow:none; }
@@ -551,8 +551,12 @@ window.tagesblickInit = function () {
   function pill(p) { return p && p.text ? '<span class="pill ' + esc(p.stufe || 'info') + '">' + esc(p.text) + '</span>' : ''; }
 
   /* Erledigt-Haken: Datenstand plus lokale Haken dieses Geräts */
-  var doneSet = store('tagesblick-erledigt') || {};
-  function isDone(e) { return !!(e.erledigt || doneSet[e.id]); }
+  /* Mit Microsoft-Anmeldung steht der Stand in OneDrive (erledigt.json) und gilt auf allen Geräten, sonst nur lokal. */
+  var ERL = window.TB_ERL || null;
+  var doneSet = ERL ? ERL.map : (store('tagesblick-erledigt') || {});
+  var TODAY_ISO = T.getFullYear() + '-' + String(T.getMonth() + 1).padStart(2, '0') + '-' + String(T.getDate()).padStart(2, '0');
+  function dkey(e) { return e.wochentag != null ? e.id + '@' + TODAY_ISO : e.id; } /* Wiederkehrendes gilt nur für den heutigen Tag */
+  function isDone(e) { return !!(e.erledigt || doneSet[dkey(e)]); }
 
   /* Welche Einträge fallen auf Tag n? */
   function occurs(e, n) {
@@ -562,11 +566,22 @@ window.tagesblickInit = function () {
     return false;
   }
   function byTime(a, b) { return String(a.zeit || '99:99').localeCompare(String(b.zeit || '99:99')); }
+  function isUndatedTask(e) { return e.art === 'Aufgabe' && e.aufgenommen && !e.datum; }
+  function taskAge(e) { return Math.max(0, -diff(e.aufgenommen)); }
+  function taskPriority(e) {
+    var age = taskAge(e);
+    return { stufe: age >= 7 ? 'akut' : age >= 3 ? 'bald' : 'ruhig',
+      text: (age >= 7 ? 'Hohe Priorität' : age >= 3 ? 'Erhöhte Priorität' : 'Normale Priorität') + ' · seit ' + age + ' ' + (age === 1 ? 'Tag' : 'Tagen') + ' offen' };
+  }
+  function entryPriority(e) { return isUndatedTask(e) && !isDone(e) ? taskPriority(e) : e.pill; }
   var OVERDUE = ['Aufgabe', 'E-Mail', 'Vorsorge', 'Arbeit', 'Schulung'];
   var E = (D.eintraege || []).map(function (e, i) { e._i = i; return e; });
-  var todayList = E.filter(function (e) { return occurs(e, 0); });
+  var todayList = E.filter(function (e) { return occurs(e, 0) || isUndatedTask(e); });
   E.forEach(function (e) { if (e.datum && diff(e.datum) < 0 && !isDone(e) && OVERDUE.indexOf(e.art) >= 0) todayList.push(e); });
-  todayList = todayList.filter(function (e, i, a) { return a.indexOf(e) === i; }).sort(byTime);
+  todayList = todayList.filter(function (e, i, a) { return a.indexOf(e) === i; }).sort(function (a, b) {
+    return byTime(a, b) || Number(!!isUndatedTask(a)) - Number(!!isUndatedTask(b)) ||
+      (isUndatedTask(a) && isUndatedTask(b) ? taskAge(b) - taskAge(a) : 0);
+  });
   var tomorrowList = E.filter(function (e) { return occurs(e, 1); }).sort(byTime);
   /* Wie eine Sekretärin: bis 14 Tage vorher steht alles hier, Dinge mit langem Vorlauf (Arzt, Schulung) ab ihrem Erinnerungstag. */
   var aheadList = E.filter(function (e) {
@@ -604,7 +619,9 @@ window.tagesblickInit = function () {
     var when = opts.count ? '<span class="when">' + diff(e.datum) + ' T</span>'
       : e.zeit ? '<span class="when">' + esc(e.zeit) + '</span>' : '<span class="when none">––:––</span>';
     var overdue = opts.check && e.datum && diff(e.datum) < 0 ? '<span class="pill akut">überfällig seit ' + shortDate(diff(e.datum)) + '</span>' : '';
-    var meta = '<span class="kind">' + esc(e.art) + '</span>' + who(e.wer) + (opts.count ? '' : pill(e.pill) + overdue);
+    var priority = entryPriority(e);
+    var meta = '<span class="kind">' + esc(e.art) + '</span>' + who(e.wer) + (opts.count ? '' : pill(priority) + overdue);
+    if (isUndatedTask(e)) meta += '<span>Aufgenommen ' + shortDate(diff(e.aufgenommen)) + '</span>';
     if (e.bis) meta += '<span>' + shortDate(diff(e.datum)) + ' bis ' + shortDate(diff(e.bis)) + '</span>';
     if (opts.count) {
       var n = diff(e.datum), lead = e.vorlauf != null ? e.vorlauf : 3, start = n - lead;
@@ -613,7 +630,7 @@ window.tagesblickInit = function () {
     }
     var prep = e.vorbereitung && e.vorbereitung.length ? '<div class="prep">' + e.vorbereitung.map(function (x) { return '<span>' + esc(x) + '</span>'; }).join('') + '</div>' : '';
     var done = isDone(e);
-    var side = opts.check && !e.hinweis ? '<input type="checkbox" id="chk-' + esc(e.id) + '" data-id="' + esc(e.id) + '"' + (e.pill && e.pill.stufe === 'akut' ? ' data-akut="1"' : '') + (done ? ' checked' : '') + ' aria-label="Erledigt: ' + esc(e.titel) + '">' : '';
+    var side = opts.check && !e.hinweis ? '<input type="checkbox" id="chk-' + esc(e.id) + '" data-id="' + esc(e.id) + '"' + (priority && priority.stufe === 'akut' ? ' data-akut="1"' : '') + (done ? ' checked' : '') + ' aria-label="Erledigt: ' + esc(e.titel) + '">' : '';
     return '<li class="item' + (done ? ' done' : '') + '" data-who="' + esc(e.wer) + '">' + when +
       '<div><div class="title">' + titled(e, e.titel) + '</div><div class="meta">' + meta + '</div>' +
       (e.warum ? '<div class="why">' + esc(e.warum) + '</div>' : '') + prep + '</div>' +
@@ -628,7 +645,7 @@ window.tagesblickInit = function () {
   tick(); setInterval(tick, 15000);
   var h = new Date().getHours();
   var openToday = todayList.filter(function (e) { return !isDone(e) && !e.hinweis; });
-  var akutToday = openToday.filter(function (e) { return e.pill && e.pill.stufe === 'akut'; });
+  var akutToday = openToday.filter(function (e) { var priority = entryPriority(e); return priority && priority.stufe === 'akut'; });
   $('greet').textContent = (h < 11 ? 'Guten Morgen.' : h < 18 ? 'Guten Tag.' : 'Guten Abend.') + ' ' +
     (todayList.length === 0 ? 'Heute steht nichts an.' : todayList.length === 1 ? 'Heute ist es ein Eintrag.' : 'Heute sind es ' + todayList.length + ' Einträge.');
   $('date').textContent = fmt(0, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
@@ -664,8 +681,9 @@ window.tagesblickInit = function () {
     var li = ev.target.closest('.item');
     li.classList.toggle('done', ev.target.checked);
     var id = ev.target.getAttribute('data-id');
-    if (ev.target.checked) doneSet[id] = 1; else delete doneSet[id];
-    store('tagesblick-erledigt', doneSet);
+    var en = (D.eintraege || []).filter(function (x) { return x.id === id; })[0], key = en ? dkey(en) : id;
+    if (ERL) ERL.set(key, ev.target.checked);
+    else { if (ev.target.checked) doneSet[key] = 1; else delete doneSet[key]; store('tagesblick-erledigt', doneSet); }
     updateOpen();
   });
 
@@ -679,7 +697,7 @@ window.tagesblickInit = function () {
   /* Zeitleiste: 14 Tage von links nach rechts, heute ganz links. */
   var tl = '';
   for (var d = 0; d < 14; d++) {
-    var onDay = d === 0 ? todayList : E.filter(function (e) { return occurs(e, this.d); }, { d: d });
+    var onDay = d === 0 ? todayList.filter(function (e) { return !isUndatedTask(e); }) : E.filter(function (e) { return occurs(e, this.d); }, { d: d });
     tl += '<div class="tday' + (d === 0 ? ' now' : '') + '"><div class="tdate"><span>' + fmt(d, { weekday: 'short' }).replace('.', '') + '</span><b>' + day(d).getDate() + '.</b></div>' +
       (d === 0
         ? '<div class="tdots">' + onDay.map(function (e) { return '<span class="dot" data-who="' + esc(e.wer) + '" style="--c:' + esc(col(e.wer)) + '"></span>'; }).join('') + '</div>'
@@ -708,11 +726,13 @@ window.tagesblickInit = function () {
       '<text class="sub" x="' + tx.toFixed(1) + '" y="' + (y + 14).toFixed(1) + '" text-anchor="' + (left ? 'end' : 'start') + '">' + esc(sub) + '</text></g>';
   }
   var radarItems = [];
-  var seenRec = {};
-  for (var rn = 1; rn <= 14; rn++) { E.filter(function (e) { return e.bis ? e.datum && diff(e.datum) === this.n : occurs(e, this.n); }, { n: rn }).forEach(function (e) {
-    if (e.wochentag != null) { if (seenRec[e.id]) return; seenRec[e.id] = 1; } /* Wiederkehrendes nur einmal: der nächste Termin */
-    radarItems.push({ e: e, n: rn });
-  }); }
+  /* Wiederkehrendes (Stern) steht nur auf dem Radar, wenn es heute oder morgen ist. */
+  for (var rn = 0; rn <= 14; rn++) { E.filter(function (e) {
+    var rec = e.wochentag != null;
+    if (rec) return this.n <= 1 && occurs(e, this.n);
+    if (this.n === 0) return false;
+    return e.bis ? e.datum && diff(e.datum) === this.n : occurs(e, this.n);
+  }, { n: rn }).forEach(function (e) { radarItems.push({ e: e, n: rn }); }); }
   $('radar').innerHTML = '<svg class="radar" viewBox="0 0 460 360" role="img" aria-label="Radar der nächsten 14 Tage. Je näher ein Punkt an der Mitte liegt, desto früher ist der Termin.">' +
     '<line class="axis" x1="' + (CX - 160) + '" y1="' + CY + '" x2="' + (CX + 160) + '" y2="' + CY + '"/>' +
     '<line class="axis" x1="' + CX + '" y1="' + (CY - 160) + '" x2="' + CX + '" y2="' + (CY + 160) + '"/>' +
@@ -722,7 +742,7 @@ window.tagesblickInit = function () {
     '<text class="ringlabel" x="' + (CX + 5) + '" y="' + (CY + rad(7) - 5).toFixed(1) + '">7 TAGE</text>' +
     '<text class="ringlabel" x="' + (CX + 5) + '" y="' + (CY + rad(14) - 5).toFixed(1) + '">14 TAGE</text>' +
     '<circle class="corering" cx="' + CX + '" cy="' + CY + '" r="10"/><circle class="core" cx="' + CX + '" cy="' + CY + '" r="4"/>' +
-    radarItems.map(function (r, i) { return blip(r.e, r.n, r.n === 1 ? 'morgen' : r.n + ' Tage', i); }).join('') + '</svg>';
+    radarItems.map(function (r, i) { return blip(r.e, r.n, r.n === 0 ? 'heute' : r.n === 1 ? 'morgen' : r.n + ' Tage', i); }).join('') + '</svg>';
   $('legend').innerHTML = Object.keys(P).map(who).join('') + '<span class="who"><span style="color:var(--bronze,#C9A25F)">★</span>wiederkehrend</span>';
 
   /* Posteingang: nur Anzeige. Für eine Antwort kopierst du einen fertigen Auftrag in Claude oder ChatGPT. */
@@ -894,7 +914,7 @@ window.tagesblickInit = function () {
 (function () {
   var THEMES = [
     ['kupfer', 'Kupfer', 'Standard', ['#110B08', '#E08F55', '#C9A25F']],
-    ['blau', 'Blau', 'Das ursprüngliche', ['#0A1020', '#5AA2FF', '#8FD3FF']],
+    ['blau', 'Blau', 'Das erste Design', ['#060A13', '#45E0FF', '#A88BFF']],
     ['enterprise', 'Enterprise', 'Raumschiff-Layout', ['#000000', '#FF9C00', '#9999FF']],
     ['pergament', 'Pergament', 'Klassisch, hell', ['#F3EBDA', '#8A2B2B', '#9A7424']],
     ['gruen', 'Englisch Grün', 'Klassisch, dunkel', ['#0D1A14', '#C9A94F', '#7FB08A']],
@@ -930,10 +950,11 @@ window.tagesblickInit = function () {
 </script>
 <script>
 /* Datenquelle: Auf Handy und Tablet meldet sich die Seite bei Microsoft an und liest daten.js aus dem eigenen OneDrive.
+   Abgehakte Einträge werden in erledigt.json im selben Ordner gespeichert, damit alle Geräte denselben Stand zeigen.
    Die Client-ID (keine Geheimzahl) und die Anmeldung stehen nur auf dem jeweiligen Gerät (localStorage), nie in dieser Datei. */
 (function () {
-  var KEY = 'tagesblick-client', CACHE = 'tagesblick-cache', SCOPES = ['Files.Read'];
-  var PFADE = ['Dokumente/90_Tagesplaner/daten.js', 'Documents/90_Tagesplaner/daten.js'];
+  var KEY = 'tagesblick-client', CACHE = 'tagesblick-cache', LOCALERL = 'tagesblick-erledigt-sync', SCOPES = ['Files.ReadWrite'];
+  var ORDNER = ['Dokumente/90_Tagesplaner/', 'Documents/90_Tagesplaner/'];
   var EMPTY = { personen: {}, eintraege: [], post: [], melden: [] };
   function ls(k, v) {
     try { if (v === undefined) return localStorage.getItem(k); if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) {}
@@ -947,7 +968,14 @@ window.tagesblickInit = function () {
   function parse(text) { return JSON.parse(text.slice(text.indexOf('{'), text.lastIndexOf('}') + 1)); }
   function start(d, msg, btn, fn) { window.TAGESBLICK = d; window.tagesblickInit(); note(msg || '', btn, fn); }
   function cached() { try { var c = ls(CACHE); return c && JSON.parse(c); } catch (e) { return null; } }
+  function localMap() { try { return JSON.parse(ls(LOCALERL) || '{}') || {}; } catch (e) { return {}; } }
   function fallback(msg, btn, fn) { var d = cached(); start(d || EMPTY, d ? msg + ' Gezeigt wird der zuletzt gespeicherte Stand.' : msg, btn, fn); }
+  function heute() { var d = new Date(), p = function (n) { return String(n).padStart(2, '0'); }; return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()); }
+  function prune(m) { /* Tageshaken für Wiederkehrendes (id@Datum) nach einer Woche vergessen */
+    var grenze = new Date(); grenze.setDate(grenze.getDate() - 7); var g = grenze.toISOString().slice(0, 10);
+    Object.keys(m).forEach(function (k) { var i = k.indexOf('@'); if (i > 0 && k.slice(i + 1) < g) delete m[k]; });
+    return m;
+  }
 
   var client = new URLSearchParams(location.search).get('client');
   if (client) { ls(KEY, client); history.replaceState(null, '', location.pathname); }
@@ -958,7 +986,7 @@ window.tagesblickInit = function () {
     var v = window.prompt('Client-ID der Microsoft-App einfügen. Leer lassen = Anmeldung und Einstellung auf diesem Gerät löschen:', ls(KEY) || '');
     if (v === null) return;
     v = v.trim();
-    if (!v) { try { Object.keys(localStorage).forEach(function (k) { if (/^msal\./i.test(k) || k === CACHE) localStorage.removeItem(k); }); } catch (e) {} }
+    if (!v) { try { Object.keys(localStorage).forEach(function (k) { if (/^msal\./i.test(k) || k === CACHE || k === LOCALERL) localStorage.removeItem(k); }); } catch (e) {} }
     ls(KEY, v || null);
     location.reload();
   });
@@ -966,30 +994,68 @@ window.tagesblickInit = function () {
   if (client) {
     var sc = document.createElement('script');
     sc.src = 'https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.20.0/lib/msal-browser.min.js';
-    sc.onerror = function () { fallback('Die Microsoft-Anmeldung konnte nicht geladen werden (keine Verbindung?).'); };
+    sc.onerror = function () { window.TB_ERL = mkErl(null, null, localMap()); fallback('Die Microsoft-Anmeldung konnte nicht geladen werden (keine Verbindung?).'); };
     sc.onload = function () {
       var app = new msal.PublicClientApplication({
         auth: { clientId: client, authority: 'https://login.microsoftonline.com/consumers', redirectUri: location.origin + location.pathname },
         cache: { cacheLocation: 'localStorage' }
       });
+      var ordner = ORDNER[0], account = null;
       function login() { app.loginRedirect({ scopes: SCOPES }); }
-      function lade(token, i) {
-        return fetch('https://graph.microsoft.com/v1.0/me/drive/root:/' + PFADE[i] + ':/content', { headers: { Authorization: 'Bearer ' + token }, cache: 'no-store' })
+      function token() { return app.acquireTokenSilent({ scopes: SCOPES, account: account }).then(function (t) { return t.accessToken; }); }
+      function url(name) { return 'https://graph.microsoft.com/v1.0/me/drive/root:/' + ordner + name + ':/content'; }
+      function lade(tok, i) {
+        ordner = ORDNER[i];
+        return fetch(url('daten.js'), { headers: { Authorization: 'Bearer ' + tok }, cache: 'no-store' })
           .then(function (r) {
-            if (r.status === 404 && i + 1 < PFADE.length) return lade(token, i + 1);
+            if (r.status === 404 && i + 1 < ORDNER.length) return lade(tok, i + 1);
             if (!r.ok) throw new Error('HTTP ' + r.status);
             return r.text();
           });
       }
+      function ladeErl(tok) {
+        return fetch(url('erledigt.json'), { headers: { Authorization: 'Bearer ' + tok }, cache: 'no-store' })
+          .then(function (r) { if (r.status === 404) return {}; if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+          .then(function (m) { return (m && typeof m === 'object') ? m : {}; });
+      }
+      /* Abgehakte Einträge: auf dem Gerät gemerkt und in OneDrive (erledigt.json) für alle Geräte gespeichert. */
+      window.mkErlOnline = function (map) {
+        var pend = [], laufend = Promise.resolve();
+        function push() {
+          laufend = laufend.then(function () {
+            if (!pend.length) return;
+            var jobs = pend.slice();
+            return token().then(function (tok) {
+              return ladeErl(tok).then(function (remote) {
+                jobs.forEach(function (j) { if (j.on) remote[j.key] = 1; else delete remote[j.key]; });
+                prune(remote);
+                return fetch(url('erledigt.json'), { method: 'PUT', headers: { Authorization: 'Bearer ' + tok, 'Content-Type': 'application/json' }, body: JSON.stringify(remote) });
+              });
+            }).then(function (r) {
+              if (!r.ok) throw new Error('HTTP ' + r.status);
+              pend.splice(0, jobs.length); note('');
+            });
+          }).catch(function () { note('Der Haken ist nur auf diesem Gerät gespeichert, OneDrive war nicht erreichbar. Beim nächsten Haken wird es erneut versucht.'); });
+        }
+        return mkErl(map, function (key, on) { pend.push({ key: key, on: on }); push(); }, map);
+      };
       app.initialize().then(function () { return app.handleRedirectPromise(); }).then(function (res) {
-        var acc = (res && res.account) || app.getAllAccounts()[0];
-        if (!acc) return start(cached() || EMPTY, 'Noch nicht angemeldet.', 'Bei Microsoft anmelden', login);
-        return app.acquireTokenSilent({ scopes: SCOPES, account: acc })
-          .catch(function () { start(cached() || EMPTY, 'Die Anmeldung ist abgelaufen.', 'Neu anmelden', login); throw null; })
-          .then(function (t) { return lade(t.accessToken, 0); })
-          .then(function (txt) { var d = parse(txt); ls(CACHE, JSON.stringify(d)); start(d); });
+        account = (res && res.account) || app.getAllAccounts()[0];
+        if (!account) { window.TB_ERL = mkErl(null, null, localMap()); return start(cached() || EMPTY, 'Noch nicht angemeldet.', 'Bei Microsoft anmelden', login); }
+        return token()
+          .catch(function () { window.TB_ERL = mkErl(null, null, localMap()); start(cached() || EMPTY, 'Die Anmeldung ist abgelaufen oder braucht die neue Berechtigung zum Speichern von Haken.', 'Neu anmelden', login); throw null; })
+          .then(function (tok) {
+            return Promise.all([lade(tok, 0), ladeErl(tok).catch(function () { return localMap(); })]);
+          })
+          .then(function (r) {
+            var d = parse(r[0]); ls(CACHE, JSON.stringify(d));
+            var m = r[1]; ls(LOCALERL, JSON.stringify(m));
+            window.TB_ERL = window.mkErlOnline(m);
+            start(d);
+          });
       }).catch(function (e) {
         if (e === null) return;
+        window.TB_ERL = mkErl(null, null, localMap());
         fallback('Daten konnten nicht aus OneDrive geladen werden (' + ((e && (e.errorCode || e.message)) || 'Fehler') + ').', 'Neu anmelden', login);
       });
     };
@@ -998,6 +1064,19 @@ window.tagesblickInit = function () {
     start(window.TAGESBLICK);
   } else {
     start(EMPTY, 'Noch keine Datenquelle. Tippe oben auf „Datenquelle“ und füge die Client-ID ein (siehe ANLEITUNG_Tablet.md).');
+  }
+
+  /* Schnittstelle für die Anzeige: { map, set(key, an) } */
+  function mkErl(map, onSet, localOnly) {
+    var m = map || localOnly || {};
+    return {
+      map: m,
+      set: function (key, on) {
+        if (on) m[key] = 1; else delete m[key];
+        ls(LOCALERL, JSON.stringify(m));
+        if (onSet) onSet(key, on);
+      }
+    };
   }
 })();
 </script>
