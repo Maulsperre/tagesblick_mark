@@ -1,0 +1,799 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Tagesblick</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=JetBrains+Mono:wght@400;500&family=Sora:wght@400;500;600&display=swap">
+<style>
+/* Layout: Terminal. Links eine Leiste mit Personenfilter, rechts Kopfzeile und ein Raster aus gleich gebauten Modulen, die sich im Anordnen-Modus verschieben und verbreitern lassen. Bewusst nur dunkel. */
+:root {
+  color-scheme: dark;
+  --bg: #110B08;
+  --panel: rgba(222, 160, 108, .055);
+  --panel-2: rgba(222, 160, 108, .11);
+  --line: rgba(205, 140, 90, .22);
+  --ink: #F5E9DC;
+  --muted: #B09A86;
+  --accent: #E08F55;
+  --accent-2: #C9A25F;
+  --glow: rgba(224, 143, 85, .42);
+  --scrim: rgba(10, 6, 4, .74);
+  --akut: #F0685C;
+  --bald: #E9B44C;
+  --ruhig: #8FC48A;
+  --luise: #C9A6E4;
+  --pauline: #F2A0B8;
+  --ich: #E08F55;
+  --familie: #B8A78F;
+  --display: "Fraunces", "Georgia", serif;
+  --body: "Sora", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body {
+  color: var(--ink);
+  background:
+    radial-gradient(900px 520px at 6% -10%, rgba(224, 143, 85, .17), transparent 60%),
+    radial-gradient(800px 600px at 100% 35%, rgba(201, 162, 95, .10), transparent 62%),
+    linear-gradient(rgba(205, 140, 90, .04) 1px, transparent 1px) 0 0 / 100% 44px,
+    linear-gradient(90deg, rgba(205, 140, 90, .04) 1px, transparent 1px) 0 0 / 44px 100%,
+    var(--bg);
+  background-attachment: fixed;
+  font-family: var(--body); font-size: 15px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 20px 48px;
+}
+h1, h2, p, ul { margin: 0; }
+ul { padding: 0; list-style: none; }
+button { font: inherit; color: inherit; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--accent-2); outline-offset: 3px; }
+
+.shell { display: grid; grid-template-columns: 176px minmax(0, 1fr); gap: 16px; max-width: 1880px; margin: 0 auto; align-items: start; }
+.main { display: flex; flex-direction: column; gap: 22px; min-width: 0; }
+
+/* Seitenleiste */
+.sidebar { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); display: flex; flex-direction: column; gap: 22px; padding: 20px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); min-width: 0; }
+.brand { display: flex; align-items: center; gap: 12px; padding: 0 4px; }
+.brand svg { flex: none; filter: drop-shadow(0 0 10px var(--glow)); }
+.brand b { display: block; font-family: var(--display); font-weight: 600; font-size: 19px; letter-spacing: .04em; }
+.brand small { display: block; font-family: var(--mono); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.navlabel { font-family: var(--mono); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); padding: 0 6px; }
+.navwrap { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.nav { display: flex; flex-direction: column; gap: 4px; }
+.nav button { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 9px 10px; border: 1px solid transparent; border-radius: 8px; background: transparent; cursor: pointer; font-family: var(--display); font-weight: 500; font-size: 13px; letter-spacing: .06em; color: var(--muted); white-space: nowrap; }
+.nav button:hover { color: var(--ink); background: var(--panel); }
+.nav button[aria-pressed="true"] { color: var(--ink); border-color: var(--accent); background: var(--panel-2); box-shadow: inset 0 0 18px rgba(224, 143, 85, .14); }
+.sidebar .demo { align-self: flex-start; }
+
+@media (max-width: 1639px) {
+  .shell { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .sidebar { position: static; flex-direction: row; align-items: center; gap: 14px; padding: 10px 12px; }
+  .brand small, .navlabel { display: none; }
+  .navwrap { overflow-x: auto; flex: 1; }
+  .nav { flex-direction: row; }
+  .nav button { width: auto; padding: 7px 10px; font-size: 14px; }
+}
+
+/* Kopf */
+.hud { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 14px 24px; }
+.clock { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 16px; }
+#clock { font-family: var(--display); font-weight: 700; font-size: clamp(40px, 7vw, 64px); line-height: .95; letter-spacing: .02em; font-variant-numeric: tabular-nums; text-shadow: 0 0 28px var(--glow); }
+.date { font-family: var(--mono); font-size: 13px; color: var(--muted); letter-spacing: .08em; text-transform: uppercase; }
+.chips { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.chip { font-family: var(--mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; padding: 5px 10px; border: 1px solid var(--line); border-radius: 4px; color: var(--ink); background: var(--panel); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.chip.akut { color: var(--akut); border-color: var(--akut); }
+.chip.demo { color: var(--bald); border-color: var(--bald); }
+.srcnote { margin: 0; padding: 8px 12px; border: 1px solid var(--bald); border-radius: 8px; color: var(--bald); font-size: 13px; flex: none; }
+#foot .btn { margin-left: 6px; }
+.chip.link { color: var(--accent); border-color: var(--accent); text-decoration: none; }
+.chip.link:hover { background: var(--accent); color: var(--bg); box-shadow: 0 0 16px var(--glow); }
+.tlink { color: inherit; text-decoration: none; border-bottom: 1px solid var(--line); }
+.tlink:hover { color: var(--accent); border-bottom-color: var(--accent); }
+a.btn { text-decoration: none; display: inline-block; }
+.editbtn { display: inline-flex; align-items: center; gap: 8px; padding: 7px 14px; border: 1.5px solid var(--accent); border-radius: 999px; background: transparent; color: var(--accent); cursor: pointer; font-family: var(--display); font-weight: 600; font-size: 13px; letter-spacing: .12em; text-transform: uppercase; }
+.editbtn:hover, .editing .editbtn { background: var(--accent); color: var(--bg); box-shadow: 0 0 20px var(--glow); }
+.resetbtn { display: none; padding: 7px 12px; border: 1px solid var(--line); border-radius: 999px; background: transparent; color: var(--muted); cursor: pointer; font-family: var(--mono); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; }
+.resetbtn:hover { color: var(--ink); border-color: var(--ink); }
+.editing .resetbtn { display: inline-block; }
+
+.brief { display: flex; flex-direction: column; gap: 8px; }
+.brief h1 { font-family: var(--display); font-weight: 600; font-size: clamp(21px, 3vw, 30px); line-height: 1.15; text-wrap: balance; }
+.brief p { font-size: 15px; color: var(--muted); max-width: 68ch; }
+.brief p strong { color: var(--ink); font-weight: 600; }
+.edithint { display: none; font-family: var(--mono); font-size: 12px; letter-spacing: .04em; color: var(--accent); }
+.editing .edithint { display: block; }
+
+/* Spracheingabe */
+.voice { display: flex; align-items: center; gap: 14px; padding: 8px 14px 8px 8px; border: 1px solid var(--line); border-radius: 999px; background: var(--panel); min-width: 0; }
+.mic { flex: none; width: 42px; height: 42px; border-radius: 50%; border: 1.5px solid var(--accent); background: transparent; color: var(--accent); display: grid; place-items: center; cursor: pointer; padding: 0; }
+.mic:hover, .voice.on .mic { background: var(--accent); color: var(--bg); box-shadow: 0 0 22px var(--glow); }
+.wave { flex: none; display: flex; align-items: center; gap: 3px; height: 22px; }
+.wave i { width: 3px; height: 100%; border-radius: 2px; background: var(--accent); transform: scaleY(.2); opacity: .55; }
+.voice.on .wave i { animation: wave .7s ease-in-out infinite alternate; opacity: 1; }
+.wave i:nth-child(2) { animation-delay: .12s; } .wave i:nth-child(3) { animation-delay: .24s; }
+.wave i:nth-child(4) { animation-delay: .36s; } .wave i:nth-child(5) { animation-delay: .48s; }
+@keyframes wave { to { transform: scaleY(1); } }
+#voiceText { min-width: 0; color: var(--muted); font-size: 14px; overflow-wrap: anywhere; }
+
+/* Modulraster */
+.mods { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; }
+@media (min-width: 700px) { .mods { grid-template-columns: repeat(2, minmax(0, 1fr)); } .mod.w2 { grid-column: span 2; } }
+@media (min-width: 1240px) { .mods { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
+.mod { display: flex; flex-direction: column; min-width: 0; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); overflow: hidden; }
+.editing .mod { border-style: dashed; border-color: var(--accent); }
+.mod.dragging { opacity: .55; box-shadow: 0 0 0 2px var(--accent), 0 0 30px var(--glow); }
+.mhead { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 10px; padding: 12px 12px 12px 16px; border-bottom: 1px solid var(--line); background: var(--panel); }
+h2 { font-family: var(--display); font-weight: 600; font-size: 16px; letter-spacing: .02em; color: var(--accent); margin-right: auto; }
+.mhead .note { font-family: var(--mono); font-size: 11px; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tools { display: flex; align-items: center; gap: 6px; }
+.tool { width: 32px; height: 32px; display: grid; place-items: center; padding: 0; border: 1px solid var(--line); border-radius: 50%; background: transparent; color: var(--muted); cursor: pointer; }
+.tool:hover { color: var(--accent); border-color: var(--accent); }
+.tool.edit { display: none; }
+.editing .tool.edit { display: grid; color: var(--accent); }
+.grip { cursor: grab; touch-action: none; }
+.mod.dragging .grip { cursor: grabbing; }
+.mbody { display: flex; flex-direction: column; gap: 14px; padding: 16px; min-width: 0; flex: 1; }
+
+/* Einträge */
+.items { display: flex; flex-direction: column; }
+.items[data-empty]::after { content: "Für diese Auswahl steht hier nichts an."; font-size: 13px; color: var(--muted); }
+.item { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; gap: 10px; align-items: start; padding: 8px 0; border-top: 1px solid var(--line); }
+.item:first-child { border-top: 0; padding-top: 0; }
+.item:last-child { padding-bottom: 0; }
+.when { font-family: var(--mono); font-weight: 500; font-size: 14px; color: var(--accent); font-variant-numeric: tabular-nums; white-space: nowrap; padding-top: 1px; }
+.when.none { color: var(--muted); }
+.title { font-weight: 600; overflow-wrap: anywhere; }
+.meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin-top: 4px; font-size: 13px; color: var(--muted); }
+.why { margin-top: 4px; font-size: 13px; color: var(--muted); }
+.item.done .title { text-decoration: line-through; color: var(--muted); font-weight: 500; }
+.side { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end; max-width: 150px; }
+
+input[type="checkbox"] { appearance: none; -webkit-appearance: none; width: 22px; height: 22px; margin: 0; border: 1.5px solid var(--accent); border-radius: 4px; background: transparent; cursor: pointer; display: grid; place-content: center; flex: none; }
+input[type="checkbox"]:checked { background: var(--accent); box-shadow: 0 0 14px var(--glow); }
+input[type="checkbox"]:checked::after { content: ""; width: 10px; height: 5px; border-left: 2px solid var(--bg); border-bottom: 2px solid var(--bg); transform: translateY(-1px) rotate(-45deg); }
+
+.who { display: inline-flex; align-items: center; gap: 6px; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--c); box-shadow: 0 0 8px var(--c); flex: none; }
+.kind { font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; }
+.pill { font-family: var(--mono); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; padding: 2px 8px; border: 1px solid var(--c); color: var(--c); border-radius: 4px; white-space: nowrap; }
+.pill.akut { --c: var(--akut); } .pill.bald { --c: var(--bald); } .pill.ruhig { --c: var(--ruhig); } .pill.info { --c: var(--accent-2); }
+.prep { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px; }
+.prep span { font-size: 12px; border: 1px dashed var(--line); border-radius: 4px; padding: 2px 8px; color: var(--ink); }
+
+/* Radar */
+.radar { width: 100%; max-width: 520px; height: auto; display: block; margin: 0 auto; }
+.radar .ring { fill: none; stroke: var(--line); stroke-width: 1; }
+.radar .axis { stroke: var(--line); stroke-width: 1; stroke-dasharray: 2 6; }
+.radar .ringlabel { fill: var(--muted); font-family: var(--mono); font-size: 10px; letter-spacing: .1em; }
+.radar .core { fill: var(--accent); }
+.radar .corering { fill: none; stroke: var(--accent); stroke-width: 1; opacity: .6; }
+.radar .blip { fill: var(--c); filter: drop-shadow(0 0 6px var(--c)); }
+.radar .halo { fill: none; stroke: var(--c); stroke-width: 1; opacity: .55; }
+.radar .lbl { fill: var(--ink); font-family: var(--display); font-weight: 600; font-size: 13px; }
+.radar .sub { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
+.radar .wedge { fill: var(--accent); opacity: .07; }
+.radar .edge { stroke: var(--accent); stroke-width: 1.5; opacity: .55; }
+.radar .sweep { transform-box: view-box; transform-origin: 230px 180px; animation: sweep 14s linear infinite; }
+@keyframes sweep { to { transform: rotate(360deg); } }
+.legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 18px; font-size: 13px; color: var(--muted); }
+
+/* Zeilen */
+.row { padding: 12px 0; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 4px; }
+.row:first-child { border-top: 0; padding-top: 0; }
+.row:last-child { padding-bottom: 0; }
+.row .from { font-size: 13px; color: var(--muted); display: flex; justify-content: space-between; gap: 6px 10px; flex-wrap: wrap; align-items: center; }
+.sorted { display: flex; flex-wrap: wrap; gap: 4px 14px; font-family: var(--mono); font-size: 12px; color: var(--muted); padding-top: 12px; border-top: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+.btn { font-family: var(--mono); font-size: 12px; letter-spacing: .05em; text-transform: uppercase; color: var(--accent); background: transparent; border: 1px solid var(--line); border-radius: 4px; padding: 6px 10px; cursor: pointer; }
+.btn:hover { border-color: var(--accent); box-shadow: 0 0 14px var(--glow); }
+.empty { font-size: 14px; color: var(--muted); }
+.said { display: flex; flex-direction: column; gap: 14px; }
+.said li { display: flex; flex-direction: column; gap: 3px; }
+.said q { font-weight: 500; quotes: "„" "“"; }
+.said .then { font-size: 13px; color: var(--muted); padding-left: 20px; position: relative; }
+.said .then::before { content: "→"; position: absolute; left: 0; color: var(--accent-2); }
+
+/* Antwort-Chat zu einer E-Mail */
+.sheet { position: fixed; inset: 0; z-index: 20; display: flex; justify-content: flex-end; background: var(--scrim); }
+.chat { width: min(500px, 100%); height: 100%; display: flex; flex-direction: column; background: var(--bg); border-left: 1px solid var(--accent); box-shadow: -20px 0 60px rgba(224, 143, 85, .14); padding-top: env(safe-area-inset-top, 0px); padding-right: env(safe-area-inset-right, 0px); }
+.chead { display: flex; align-items: flex-start; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--line); background: var(--panel); }
+.cinfo { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.lab { font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.thread { flex: 1; min-height: 80px; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+.bub { max-width: 88%; padding: 9px 12px; border-radius: 12px; font-size: 14px; overflow-wrap: anywhere; white-space: pre-wrap; border: 1px solid var(--line); background: var(--panel); align-self: flex-start; }
+.bub.du { align-self: flex-end; border-color: var(--accent); background: var(--panel-2); }
+.bub.sys { align-self: center; max-width: 100%; border: 0; background: transparent; color: var(--muted); font-size: 13px; text-align: center; }
+.draftbox { display: flex; flex-direction: column; gap: 8px; padding: 12px 16px; border-top: 1px solid var(--line); max-height: 48%; overflow-y: auto; background: var(--panel); }
+textarea { font: inherit; font-size: 14px; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 10px; width: 100%; resize: vertical; display: block; }
+textarea:focus-visible { outline: 2px solid var(--accent-2); outline-offset: 1px; }
+.folgen { display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
+.folgen li { padding-left: 18px; position: relative; overflow-wrap: anywhere; }
+.folgen li::before { content: "→"; position: absolute; left: 0; color: var(--bald); }
+.sendbtn { align-self: flex-start; padding: 9px 16px; border: 1.5px solid var(--accent); border-radius: 999px; background: var(--accent); color: var(--bg); cursor: pointer; font-family: var(--display); font-weight: 600; font-size: 13px; letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; }
+.sendbtn:hover { box-shadow: 0 0 20px var(--glow); }
+.sendbtn:disabled { background: transparent; color: var(--muted); border-color: var(--line); box-shadow: none; cursor: default; }
+.composer { display: flex; align-items: flex-end; gap: 8px; padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px)); border-top: 1px solid var(--line); }
+.cfield { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.partial { font-size: 12px; color: var(--accent); min-height: 0; overflow-wrap: anywhere; }
+.mic.small { width: 38px; height: 38px; }
+.mic.on { background: var(--accent); color: var(--bg); box-shadow: 0 0 22px var(--glow); }
+
+footer { font-size: 13px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 16px; max-width: 80ch; }
+
+@media (max-width: 480px) { .item { grid-template-columns: 46px minmax(0, 1fr) auto; gap: 10px; } .side { max-width: 110px; } }
+@media (prefers-reduced-motion: reduce) { .radar .sweep, .voice.on .wave i { animation: none; } }
+
+/* Dichte: ausgelegt auf ein Tablet im Hochformat (zwei Spalten) und einen 16:9-Bildschirm (drei bis vier Spalten). */
+body { font-size: 13px; line-height: 1.42; padding-block: 12px 28px; }
+.main { gap: 12px; }
+.sidebar { padding: 14px 10px; gap: 16px; }
+.brand b { font-size: 17px; letter-spacing: .03em; }
+.brand svg { width: 30px; height: 30px; }
+#clock { font-size: clamp(28px, 3.4vw, 40px); }
+.date { font-size: 11.5px; }
+.chip { font-size: 10.5px; padding: 4px 8px; }
+.editbtn { font-size: 11.5px; padding: 5px 12px; }
+.resetbtn { font-size: 10.5px; padding: 5px 10px; }
+.intro { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.brief { gap: 4px; }
+.brief h1 { font-size: clamp(16px, 1.7vw, 20px); }
+.brief p { font-size: 13px; max-width: 80ch; }
+.voice { gap: 10px; padding: 5px 12px 5px 5px; }
+.mic { width: 34px; height: 34px; }
+.mic svg { width: 16px; height: 16px; }
+.wave { height: 18px; }
+#voiceText { font-size: 12.5px; }
+.mods { gap: 10px; }
+.mod { border-radius: 10px; }
+.mhead { padding: 7px 8px 7px 12px; gap: 6px 8px; }
+h2 { font-size: 15px; letter-spacing: .02em; }
+.mhead .note { font-size: 10.5px; }
+.tool { width: 26px; height: 26px; }
+.mbody { padding: 10px 12px 12px; gap: 10px; }
+.when { font-size: 12px; }
+.meta { font-size: 11.5px; margin-top: 2px; gap: 2px 8px; }
+.why { font-size: 11.5px; margin-top: 2px; }
+.kind, .pill { font-size: 10px; }
+.prep { margin-top: 6px; gap: 4px; }
+.prep span { font-size: 11px; padding: 1px 6px; }
+input[type="checkbox"] { width: 20px; height: 20px; }
+.row { padding: 8px 0; gap: 2px; }
+.row .from { font-size: 11.5px; }
+.sorted { font-size: 11px; padding-top: 8px; }
+.btn { font-size: 11px; padding: 5px 9px; }
+.actions { margin-top: 4px; }
+.legend { font-size: 11.5px; gap: 2px 14px; }
+.radar { max-width: 420px; }
+.said { gap: 10px; }
+.said .then { font-size: 11.5px; }
+.empty { font-size: 13px; }
+footer { font-size: 11.5px; padding-top: 10px; }
+.bub { font-size: 13px; }
+textarea { font-size: 13px; }
+@media (min-width: 1240px) {
+  .intro { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); align-items: center; gap: 16px; }
+}
+@media (min-width: 1640px) { .mods { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.sidebar .demo { flex: none; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; }
+.seg button { padding: 5px 10px; border: 0; background: transparent; color: var(--muted); cursor: pointer; font-family: var(--mono); font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; }
+.seg button:hover { color: var(--ink); }
+.seg button[aria-pressed="true"] { background: var(--panel-2); color: var(--accent); }
+.seg button:focus-visible { outline-offset: -2px; }
+
+/* Zeitleiste */
+.tl { display: grid; grid-template-columns: repeat(14, minmax(0, 1fr)); border: 1px solid var(--line); border-radius: 10px; background: var(--panel); overflow: hidden; flex: none; }
+.tday { display: flex; flex-direction: column; gap: 3px; min-width: 0; min-height: 50px; padding: 5px 6px 6px; border-left: 1px solid var(--line); }
+.tday:first-child { border-left: 0; }
+.tday.now { background: var(--panel-2); }
+.tdate { display: flex; align-items: baseline; gap: 4px; font-family: var(--mono); font-size: 10px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); white-space: nowrap; }
+.tdate b { font-weight: 500; font-size: 11.5px; color: var(--ink); font-variant-numeric: tabular-nums; }
+.tday.now .tdate span { color: var(--accent); }
+.tdots { display: flex; flex-wrap: wrap; gap: 4px; padding-top: 2px; }
+.tev { display: flex; align-items: center; gap: 4px; min-width: 0; font-size: 11px; font-weight: 600; }
+.tlabel { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 700px) {
+  .tday { align-items: center; padding: 4px 1px 5px; min-height: 46px; }
+  .tdate { flex-direction: column; align-items: center; gap: 0; font-size: 9px; }
+  .tlabel { display: none; }
+  .tdots { justify-content: center; gap: 2px; }
+  .tdots .dot, .tev .dot { width: 6px; height: 6px; }
+}
+
+/* Ein-Fenster-Modus für Laptop und Monitor: nichts scrollt außer dem Inhalt eines Moduls. */
+@media (min-width: 1200px) and (min-height: 560px) {
+  html, body { height: 100%; overflow: hidden; }
+  body { margin: 0; padding-block: 8px; }
+  .shell { height: 100%; align-items: stretch; grid-template-rows: minmax(0, 1fr); gap: 10px; }
+  .sidebar { min-height: 0; overflow-y: auto; }
+  .main { height: 100%; min-height: 0; gap: 10px; }
+  .intro { flex: none; display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); align-items: center; gap: 16px; }
+  .voice, .tl { flex: none; }
+  .mods { flex: 1; min-height: 0; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-template-rows: repeat(2, minmax(0, 1fr)); grid-auto-rows: minmax(0, 1fr); grid-auto-flow: row dense; }
+  .mod { min-height: 0; display: grid; grid-template-rows: auto minmax(0, 1fr); }
+  .mhead { flex: none; }
+  .mbody { min-height: 0; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
+  #radar { height: 100%; min-height: 0; display: flex; justify-content: center; }
+  .radar { width: auto; height: 100%; max-width: 100%; margin: 0; }
+  footer { display: none; }
+}
+@media (min-width: 1200px) and (max-width: 1639px) and (min-height: 560px) {
+  .shell { grid-template-rows: auto minmax(0, 1fr); }
+}
+@media (min-width: 1640px) and (min-height: 560px) {
+  .sidebar { align-self: stretch; }
+}
+@media (min-width: 1200px) and (min-height: 560px) and (max-height: 820px) {
+  #summary { display: none; }
+  #clock { font-size: 30px; }
+}
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <aside class="sidebar">
+    <div class="brand">
+      <svg width="36" height="36" viewBox="0 0 36 36" aria-hidden="true"><circle cx="18" cy="18" r="16" fill="none" stroke="var(--line)" stroke-width="1.5"/><circle cx="18" cy="18" r="10" fill="none" stroke="var(--accent-2)" stroke-width="1.5"/><circle cx="18" cy="18" r="3.5" fill="var(--accent)"/><circle cx="29" cy="10" r="2.5" fill="var(--accent-2)"/></svg>
+      <div><b>Tagesblick</b><small>Familien-Leitstand</small></div>
+    </div>
+    <div class="navwrap">
+      <span class="navlabel">Anzeigen für</span>
+      <div class="nav" id="nav"></div>
+    </div>
+    <span class="chip demo" id="demoChip" hidden>Demo · Beispieldaten</span>
+  </aside>
+
+  <div class="main">
+    <div class="hud">
+      <div class="clock"><span id="clock">--:--</span><span class="date" id="date"></span></div>
+      <div class="chips">
+        <span class="chip" id="open"></span>
+        <span class="chip akut" id="akut"></span>
+        <span class="chip" id="next" hidden></span>
+        <a class="chip link" id="lGmail" href="https://mail.google.com/" target="_blank" rel="noopener">Gmail ↗</a>
+        <a class="chip link" id="lKal" href="https://calendar.google.com/" target="_blank" rel="noopener">Kalender ↗</a>
+        <span class="seg" role="group" aria-label="Ansicht der nächsten 14 Tage">
+          <button type="button" id="vZeit" aria-pressed="true">Zeitleiste</button>
+          <button type="button" id="vRadar" aria-pressed="false">Radar</button>
+        </span>
+        <button class="resetbtn" type="button" id="reset">Zurücksetzen</button>
+        <button class="editbtn" type="button" id="edit" aria-pressed="false">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9" fill="none"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" fill="none"/></svg>
+          <span id="editLabel">Anordnen</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="intro">
+      <header class="brief">
+        <h1 id="greet"></h1>
+        <p id="summary"></p>
+        <p class="edithint">Module am Griff ziehen oder mit den Pfeilen verschieben. Der Doppelpfeil macht ein Modul breiter oder schmaler.</p>
+      </header>
+    </div>
+
+    <p class="srcnote" id="srcNote" hidden></p>
+
+    <div class="tl" id="timeline" role="group" aria-label="Die nächsten 14 Tage"></div>
+
+    <div class="mods" id="mods">
+      <section class="mod w2" data-id="heute" data-title="Heute" data-note-id="todayDate"><div class="mbody"><ul class="items" id="today"></ul></div></section>
+      <section class="mod" data-id="radar" data-title="Radar" data-note="14 Tage" hidden><div class="mbody"><div id="radar"></div><div class="legend" id="legend"></div></div></section>
+      <section class="mod" data-id="morgen" data-title="Morgen im Blick" data-note-id="tomorrowDate"><div class="mbody"><ul class="items" id="tomorrow"></ul></div></section>
+      <section class="mod" data-id="kommend" data-title="Rückt näher" data-note-id="aheadCount"><div class="mbody"><ul class="items" id="ahead"></ul></div></section>
+      <section class="mod w2" data-id="post" data-title="Posteingang" data-note-id="mailCount"><div class="mbody"><div id="mail"></div><div class="sorted" id="sorted"></div></div></section>
+      <section class="mod" data-id="melden" data-title="Mal wieder melden" data-note-id="peopleCount"><div class="mbody"><div id="people"></div></div></section>
+      <section class="mod" data-id="zuruf" data-title="So kommen Einträge rein"><div class="mbody">
+        <ul class="said">
+          <li><q>Dienstags hat Luise Probleme mit Ethik.</q><span class="then">Sag das Claude oder ChatGPT. Die App ergänzt daten.js, du lädst die Seite neu.</span></li>
+          <li><q>Von Jonas habe ich lange nichts mehr gehört.</q><span class="then">Kommt unter „Mal wieder melden“.</span></li>
+          <li><q>Erinnere mich früh an den Kliniktermin.</q><span class="then">Eintrag mit Vorlauf und Liste der Unterlagen.</span></li>
+        </ul>
+        <p class="why">Die Regeln für die KI stehen in <b>ANLEITUNG.md</b>.</p>
+      </div></section>
+    </div>
+
+    <footer id="foot">Die Daten stehen in <b>daten.js</b>. Claude und ChatGPT ändern nur diese Datei, die Seite zeigt sie an. Haken und Anordnung merkt sich die Seite auf diesem Gerät. <button class="btn" type="button" id="setSrc">Datenquelle</button></footer>
+  </div>
+</div>
+
+<script>
+/* Am PC (Datei oder localhost) kommen die Daten aus daten.js im selben Ordner. */
+if (location.protocol === 'file:' || location.hostname === 'localhost') document.write('<script src="daten.js?t=' + Date.now() + '"><\/script>');
+</script>
+<script>
+window.tagesblickInit = function () {
+  var D = window.TAGESBLICK || { personen: {}, eintraege: [], post: [], melden: [] };
+  var T = new Date(); T.setHours(0, 0, 0, 0);
+  function day(n) { var d = new Date(T); d.setDate(d.getDate() + n); return d; }
+  function fmt(n, o) { return day(n).toLocaleDateString('de-DE', o); }
+  function wd(n) { return fmt(n, { weekday: 'long' }); }
+  function shortDate(n) { return fmt(n, { weekday: 'short', day: 'numeric', month: 'numeric' }); }
+  function $(id) { return document.getElementById(id); }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function parseISO(s) { var p = String(s).split('-'); return new Date(+p[0], +p[1] - 1, +p[2]); }
+  function diff(s) { return Math.round((parseISO(s) - T) / 864e5); }
+  function store(key, val) { try { if (val === undefined) return JSON.parse(localStorage.getItem(key) || 'null'); localStorage.setItem(key, JSON.stringify(val)); } catch (e) {} return null; }
+
+  var P = D.personen || {};
+  function who(k) { var p = P[k] || { name: k, farbe: 'var(--familie)' }; return '<span class="who" style="--c:' + esc(p.farbe) + '"><span class="dot"></span>' + esc(p.name) + '</span>'; }
+  function col(k) { return (P[k] && P[k].farbe) || 'var(--familie)'; }
+  /* Links: entweder "link" (nur http/https) oder "gmail" mit der Thread-ID einer Mail. */
+  function linkOf(o) {
+    var u = o.link || (o.gmail ? 'https://mail.google.com/mail/u/0/#all/' + encodeURIComponent(o.gmail) : '');
+    return /^https?:\/\//i.test(u) ? u : '';
+  }
+  function titled(o, text) {
+    var u = linkOf(o);
+    return u ? '<a class="tlink" href="' + esc(u) + '" target="_blank" rel="noopener">' + esc(text) + ' ↗</a>' : esc(text);
+  }
+  function pill(p) { return p && p.text ? '<span class="pill ' + esc(p.stufe || 'info') + '">' + esc(p.text) + '</span>' : ''; }
+
+  /* Erledigt-Haken: Datenstand plus lokale Haken dieses Geräts */
+  var doneSet = store('tagesblick-erledigt') || {};
+  function isDone(e) { return !!(e.erledigt || doneSet[e.id]); }
+
+  /* Welche Einträge fallen auf Tag n? */
+  function occurs(e, n) {
+    if (e.datum) return diff(e.datum) === n;
+    if (e.wochentag != null) return day(n).getDay() === Number(e.wochentag);
+    return false;
+  }
+  function byTime(a, b) { return String(a.zeit || '99:99').localeCompare(String(b.zeit || '99:99')); }
+  var OVERDUE = ['Aufgabe', 'E-Mail', 'Vorsorge', 'Arbeit', 'Schulung'];
+  var E = (D.eintraege || []).map(function (e, i) { e._i = i; return e; });
+  var todayList = E.filter(function (e) { return occurs(e, 0); });
+  E.forEach(function (e) { if (e.datum && diff(e.datum) < 0 && !isDone(e) && OVERDUE.indexOf(e.art) >= 0) todayList.push(e); });
+  todayList = todayList.filter(function (e, i, a) { return a.indexOf(e) === i; }).sort(byTime);
+  var tomorrowList = E.filter(function (e) { return occurs(e, 1); }).sort(byTime);
+  /* Wie eine Sekretärin: bis 14 Tage vorher steht alles hier, Dinge mit langem Vorlauf (Arzt, Schulung) ab ihrem Erinnerungstag. */
+  var aheadList = E.filter(function (e) {
+    if (!e.datum || isDone(e)) return false;
+    var n = diff(e.datum), lead = e.vorlauf != null ? e.vorlauf : 3;
+    return n >= 2 && (n <= 14 || n - lead <= 0);
+  })
+    .sort(function (a, b) { return diff(a.datum) - diff(b.datum) || byTime(a, b); });
+
+  /* Modulköpfe */
+  var ICON = {
+    wide: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h18M7 8l-4 4 4 4M17 8l4 4-4 4" fill="none"/></svg>',
+    prev: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none"/></svg>',
+    next: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none"/></svg>',
+    grip: '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="8" cy="5" r="2"/><circle cx="16" cy="5" r="2"/><circle cx="8" cy="12" r="2"/><circle cx="16" cy="12" r="2"/><circle cx="8" cy="19" r="2"/><circle cx="16" cy="19" r="2"/></svg>'
+  };
+  var grid = $('mods');
+  var DEFAULT = [].map.call(grid.children, function (m) { return { id: m.dataset.id, w2: m.classList.contains('w2') }; });
+  [].forEach.call(grid.children, function (m) {
+    var id = m.dataset.id, t = m.dataset.title;
+    var head = document.createElement('div');
+    head.className = 'mhead';
+    head.innerHTML = '<h2>' + t + '</h2>' +
+      '<span class="note"' + (m.dataset.noteId ? ' id="' + m.dataset.noteId + '"' : '') + '>' + (m.dataset.note || '') + '</span>' +
+      '<div class="tools">' +
+      '<button class="tool edit" type="button" id="prev-' + id + '" data-act="prev" aria-label="' + t + ' nach vorn schieben">' + ICON.prev + '</button>' +
+      '<button class="tool edit" type="button" id="next-' + id + '" data-act="next" aria-label="' + t + ' nach hinten schieben">' + ICON.next + '</button>' +
+      '<button class="tool" type="button" id="wide-' + id + '" data-act="wide" aria-label="' + t + ' breiter oder schmaler machen">' + ICON.wide + '</button>' +
+      '<button class="tool edit grip" type="button" id="grip-' + id + '" data-act="grip" aria-label="' + t + ' ziehen">' + ICON.grip + '</button>' +
+      '</div>';
+    m.insertBefore(head, m.firstChild);
+  });
+
+  function item(e, opts) {
+    var when = opts.count ? '<span class="when">' + diff(e.datum) + ' T</span>'
+      : e.zeit ? '<span class="when">' + esc(e.zeit) + '</span>' : '<span class="when none">––:––</span>';
+    var overdue = opts.check && e.datum && diff(e.datum) < 0 ? '<span class="pill akut">überfällig seit ' + shortDate(diff(e.datum)) + '</span>' : '';
+    var meta = '<span class="kind">' + esc(e.art) + '</span>' + who(e.wer) + (opts.count ? '' : pill(e.pill) + overdue);
+    if (opts.count) {
+      var n = diff(e.datum), lead = e.vorlauf != null ? e.vorlauf : 3, start = n - lead;
+      meta += '<span>' + shortDate(n) + (e.zeit ? ', ' + esc(e.zeit) : '') + '</span>';
+      meta += start <= 0 ? '<span class="pill ruhig">Erinnerung läuft</span>' : '<span class="pill info">Erinnerung ab ' + shortDate(start) + '</span>';
+    }
+    var prep = e.vorbereitung && e.vorbereitung.length ? '<div class="prep">' + e.vorbereitung.map(function (x) { return '<span>' + esc(x) + '</span>'; }).join('') + '</div>' : '';
+    var done = isDone(e);
+    var side = opts.check && !e.hinweis ? '<input type="checkbox" id="chk-' + esc(e.id) + '" data-id="' + esc(e.id) + '"' + (e.pill && e.pill.stufe === 'akut' ? ' data-akut="1"' : '') + (done ? ' checked' : '') + ' aria-label="Erledigt: ' + esc(e.titel) + '">' : '';
+    return '<li class="item' + (done ? ' done' : '') + '" data-who="' + esc(e.wer) + '">' + when +
+      '<div><div class="title">' + titled(e, e.titel) + '</div><div class="meta">' + meta + '</div>' +
+      (e.warum ? '<div class="why">' + esc(e.warum) + '</div>' : '') + prep + '</div>' +
+      '<div class="side">' + side + '</div></li>';
+  }
+
+  /* Kopf */
+  function tick() {
+    var now = new Date();
+    $('clock').textContent = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+  }
+  tick(); setInterval(tick, 15000);
+  var h = new Date().getHours();
+  var openToday = todayList.filter(function (e) { return !isDone(e) && !e.hinweis; });
+  var akutToday = openToday.filter(function (e) { return e.pill && e.pill.stufe === 'akut'; });
+  $('greet').textContent = (h < 11 ? 'Guten Morgen.' : h < 18 ? 'Guten Tag.' : 'Guten Abend.') + ' ' +
+    (todayList.length === 0 ? 'Heute steht nichts an.' : todayList.length === 1 ? 'Heute ist es ein Eintrag.' : 'Heute sind es ' + todayList.length + ' Einträge.');
+  $('date').textContent = fmt(0, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  (function () {
+    var parts = [];
+    if (akutToday.length) parts.push('Akut: <strong>' + akutToday.map(function (e) { return esc(e.titel); }).join('</strong>, <strong>') + '</strong>.');
+    if (tomorrowList.length) parts.push('Morgen: <strong>' + esc(tomorrowList[0].titel) + '</strong>' + (tomorrowList.length > 1 ? ' und ' + (tomorrowList.length - 1) + ' weitere' : '') + '.');
+    if (aheadList.length) parts.push('Als Nächstes rückt <strong>' + esc(aheadList[0].titel) + '</strong> näher, am ' + wd(diff(aheadList[0].datum)) + '.');
+    $('summary').innerHTML = parts.join(' ');
+  })();
+  $('todayDate').textContent = shortDate(0);
+  $('tomorrowDate').textContent = shortDate(1);
+  $('aheadCount').textContent = aheadList.length ? aheadList.length + (aheadList.length === 1 ? ' Termin' : ' Termine') : '';
+  $('demoChip').hidden = !D.demo;
+  if (D.demo) $('foot').innerHTML = 'Alle Einträge sind Beispieldaten. Ersetze sie in <b>daten.js</b> (siehe ANLEITUNG.md) und setze dort <b>demo</b> auf false. Haken und Anordnung merkt sich die Seite auf diesem Gerät. <button class="btn" type="button" id="setSrc">Datenquelle</button>';
+
+  /* Listen */
+  function renderLists() {
+    $('today').innerHTML = todayList.map(function (e) { return item(e, { check: true }); }).join('');
+    $('tomorrow').innerHTML = tomorrowList.map(function (e) { return item(e, {}); }).join('');
+    $('ahead').innerHTML = aheadList.map(function (e) { return item(e, { count: true }); }).join('');
+    updateOpen();
+    applyFilter();
+  }
+  function updateOpen() {
+    var left = $('today').querySelectorAll('input:not(:checked)').length;
+    var akut = $('today').querySelectorAll('input[data-akut]:not(:checked)').length;
+    $('open').textContent = left === 0 ? 'Alles erledigt' : left + ' offen';
+    $('akut').textContent = akut + ' akut';
+    $('akut').hidden = akut === 0;
+  }
+  $('today').addEventListener('change', function (ev) {
+    var li = ev.target.closest('.item');
+    li.classList.toggle('done', ev.target.checked);
+    var id = ev.target.getAttribute('data-id');
+    if (ev.target.checked) doneSet[id] = 1; else delete doneSet[id];
+    store('tagesblick-erledigt', doneSet);
+    updateOpen();
+  });
+
+  /* Nächster Termin heute */
+  (function () {
+    var now = new Date(), cur = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+    var nx = todayList.filter(function (e) { return e.zeit && e.zeit >= cur && !isDone(e); })[0];
+    if (nx) { $('next').textContent = 'Nächster Termin ' + nx.zeit; $('next').hidden = false; }
+  })();
+
+  /* Zeitleiste: 14 Tage von links nach rechts, heute ganz links. */
+  var tl = '';
+  for (var d = 0; d < 14; d++) {
+    var onDay = d === 0 ? todayList : E.filter(function (e) { return occurs(e, this.d); }, { d: d });
+    tl += '<div class="tday' + (d === 0 ? ' now' : '') + '"><div class="tdate"><span>' + fmt(d, { weekday: 'short' }).replace('.', '') + '</span><b>' + day(d).getDate() + '.</b></div>' +
+      (d === 0
+        ? '<div class="tdots">' + onDay.map(function (e) { return '<span class="dot" data-who="' + esc(e.wer) + '" style="--c:' + esc(col(e.wer)) + '"></span>'; }).join('') + '</div>'
+        : onDay.map(function (e) { return '<span class="tev" data-who="' + esc(e.wer) + '" style="--c:' + esc(col(e.wer)) + '" title="' + esc(e.titel) + '"><span class="dot"></span><span class="tlabel">' + esc(e.kurz || e.titel) + '</span></span>'; }).join('')) +
+      '</div>';
+  }
+  $('timeline').innerHTML = tl;
+
+  /* Radar als zweite Ansicht: Mitte ist heute, der äußere Ring liegt 14 Tage entfernt. */
+  var CX = 230, CY = 180;
+  function rad(n) { return 22 + n / 14 * 138; }
+  function blip(e, n, sub, idx) {
+    var a = e.winkel != null ? e.winkel : (idx * 67 + 25) % 360;
+    var t = a * Math.PI / 180, r = rad(n);
+    var x = CX + r * Math.cos(t), y = CY + r * Math.sin(t);
+    var left = Math.cos(t) < 0, tx = x + (left ? -13 : 13);
+    return '<g data-who="' + esc(e.wer) + '" style="--c:' + esc(col(e.wer)) + '"><circle class="halo" cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="9"/>' +
+      '<circle class="blip" cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="4.5"/>' +
+      '<text class="lbl" x="' + tx.toFixed(1) + '" y="' + (y + 1).toFixed(1) + '" text-anchor="' + (left ? 'end' : 'start') + '">' + esc(e.kurz || e.titel) + '</text>' +
+      '<text class="sub" x="' + tx.toFixed(1) + '" y="' + (y + 14).toFixed(1) + '" text-anchor="' + (left ? 'end' : 'start') + '">' + esc(sub) + '</text></g>';
+  }
+  var radarItems = [];
+  for (var rn = 1; rn <= 14; rn++) { E.filter(function (e) { return occurs(e, this.n); }, { n: rn }).forEach(function (e) { radarItems.push({ e: e, n: rn }); }); }
+  $('radar').innerHTML = '<svg class="radar" viewBox="0 0 460 360" role="img" aria-label="Radar der nächsten 14 Tage. Je näher ein Punkt an der Mitte liegt, desto früher ist der Termin.">' +
+    '<line class="axis" x1="' + (CX - 160) + '" y1="' + CY + '" x2="' + (CX + 160) + '" y2="' + CY + '"/>' +
+    '<line class="axis" x1="' + CX + '" y1="' + (CY - 160) + '" x2="' + CX + '" y2="' + (CY + 160) + '"/>' +
+    [1, 7, 14].map(function (n) { return '<circle class="ring" cx="' + CX + '" cy="' + CY + '" r="' + rad(n).toFixed(1) + '"/>'; }).join('') +
+    '<g class="sweep"><path class="wedge" d="M' + CX + ' ' + CY + ' L' + (CX + 160) + ' ' + CY + ' A160 160 0 0 1 ' + (CX + 122.6) + ' ' + (CY + 102.8) + ' Z"/>' +
+    '<line class="edge" x1="' + CX + '" y1="' + CY + '" x2="' + (CX + 122.6) + '" y2="' + (CY + 102.8) + '"/></g>' +
+    '<text class="ringlabel" x="' + (CX + 5) + '" y="' + (CY + rad(7) - 5).toFixed(1) + '">7 TAGE</text>' +
+    '<text class="ringlabel" x="' + (CX + 5) + '" y="' + (CY + rad(14) - 5).toFixed(1) + '">14 TAGE</text>' +
+    '<circle class="corering" cx="' + CX + '" cy="' + CY + '" r="10"/><circle class="core" cx="' + CX + '" cy="' + CY + '" r="4"/>' +
+    radarItems.map(function (r, i) { return blip(r.e, r.n, r.n === 1 ? 'morgen' : r.n + ' Tage', i); }).join('') + '</svg>';
+  $('legend').innerHTML = Object.keys(P).map(who).join('');
+
+  /* Posteingang: nur Anzeige. Für eine Antwort kopierst du einen fertigen Auftrag in Claude oder ChatGPT. */
+  var mail = D.post || [];
+  $('mailCount').textContent = mail.length ? mail.length + ' wichtig' : '';
+  $('mail').innerHTML = mail.length ? mail.map(function (m, i) {
+    return '<div class="row"><div class="from"><span>' + esc(m.von) + '</span>' + pill(m.pill) + '</div>' +
+      '<div class="title">' + titled(m, m.betreff) + '</div><div class="why">' + esc(m.text) + '</div>' +
+      '<div class="actions">' + (linkOf(m) ? '<a class="btn" id="open-' + i + '" href="' + esc(linkOf(m)) + '" target="_blank" rel="noopener">In Gmail öffnen ↗</a>' : '') +
+      '<button class="btn" type="button" id="copy-' + i + '" data-copy="' + i + '">Antwort-Auftrag kopieren</button></div></div>';
+  }).join('') : '<p class="empty">Nichts Wichtiges im Posteingang.</p>';
+  $('mail').addEventListener('click', function (ev) {
+    var b = ev.target.closest('[data-copy]'); if (!b) return;
+    var m = mail[Number(b.dataset.copy)];
+    var txt = 'Schreibe mir einen kurzen Antwortentwurf auf Deutsch auf diese E-Mail. Erfinde keine Tatsachen, frag nach, wenn etwas fehlt.\n\nVon: ' + m.von + '\nBetreff: ' + m.betreff + '\nInhalt: ' + m.text;
+    function ok() { b.textContent = 'Kopiert. In Claude oder ChatGPT einfügen.'; setTimeout(function () { b.textContent = 'Antwort-Auftrag kopieren'; }, 3500); }
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(ok, function () { window.prompt('Zum Kopieren:', txt); });
+    else window.prompt('Zum Kopieren:', txt);
+  });
+  var s = D.einsortiert || [];
+  $('sorted').innerHTML = s.length ? '<span>Einsortiert</span>' + s.map(function (x) { return '<span>' + esc(x) + '</span>'; }).join('') : '';
+  $('sorted').hidden = !s.length;
+
+  /* Mal wieder melden */
+  var gone = store('tagesblick-gemeldet') || {};
+  function renderPeople() {
+    var people = (D.melden || []).filter(function (p) { return !gone[p.id]; });
+    $('peopleCount').textContent = people.length ? people.length + ' offen' : '';
+    $('people').innerHTML = people.length ? people.map(function (p) {
+      return '<div class="row"><div class="from"><span>' + esc(p.beziehung) + '</span><span>letzter Kontakt ' + esc(p.zuletzt) + '</span></div>' +
+        '<div class="title">' + esc(p.name) + '</div><div class="why">' + esc(p.notiz) + '</div>' +
+        '<div class="actions"><button class="btn" type="button" id="ok-' + esc(p.id) + '" data-id="' + esc(p.id) + '">Habe mich gemeldet</button></div></div>';
+    }).join('') : '<p class="empty">Niemand offen. Sag Claude oder ChatGPT, bei wem du dich melden möchtest.</p>';
+  }
+  $('people').addEventListener('click', function (ev) {
+    var id = ev.target.getAttribute && ev.target.getAttribute('data-id');
+    if (!id) return;
+    gone[id] = 1; store('tagesblick-gemeldet', gone);
+    renderPeople();
+  });
+
+  /* Personenfilter in der Seitenleiste */
+  var filter = '';
+  $('nav').innerHTML = '<button type="button" id="f-alle" data-f="" aria-pressed="true">Alle</button>' +
+    Object.keys(P).map(function (k) {
+      return '<button type="button" id="f-' + esc(k) + '" data-f="' + esc(k) + '" aria-pressed="false"><span class="dot" style="--c:' + esc(P[k].farbe) + '"></span>' + esc(P[k].name) + '</button>';
+    }).join('');
+  $('nav').addEventListener('click', function (ev) {
+    var b = ev.target.closest('button'); if (!b) return;
+    filter = b.dataset.f;
+    [].forEach.call($('nav').children, function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+    applyFilter();
+  });
+  function applyFilter() {
+    [].forEach.call(document.querySelectorAll('[data-who]'), function (el) {
+      el.style.display = filter && el.dataset.who !== filter ? 'none' : '';
+    });
+    [].forEach.call(document.querySelectorAll('.items'), function (ul) {
+      var any = [].some.call(ul.children, function (li) { return li.style.display !== 'none'; });
+      if (any) ul.removeAttribute('data-empty'); else ul.setAttribute('data-empty', '');
+    });
+  }
+
+  /* Module anordnen */
+  var KEY = 'tagesblick-layout';
+  function mods() { return [].slice.call(grid.children); }
+  function byId(id) { return grid.querySelector('.mod[data-id="' + id + '"]'); }
+  function apply(layout) {
+    layout.forEach(function (l) {
+      var m = byId(l.id); if (!m) return;
+      m.classList.toggle('w2', !!l.w2);
+      grid.appendChild(m);
+    });
+  }
+  function save() { store(KEY, mods().map(function (m) { return { id: m.dataset.id, w2: m.classList.contains('w2') }; })); }
+  var stored = store(KEY); if (Array.isArray(stored)) apply(stored);
+
+  /* Umschalter: schmale Zeitleiste oder Radar-Modul */
+  var VKEY = 'tagesblick-ansicht';
+  function setView(v, clicked) {
+    var zeit = v !== 'radar';
+    $('timeline').hidden = !zeit;
+    byId('radar').hidden = zeit;
+    $('vZeit').setAttribute('aria-pressed', String(zeit));
+    $('vRadar').setAttribute('aria-pressed', String(!zeit));
+    if (!clicked) return;
+    byId('post').classList.toggle('w2', zeit);
+    store(VKEY, zeit ? 'zeit' : 'radar');
+    save();
+  }
+  setView(store(VKEY) || 'zeit', false);
+  $('vZeit').addEventListener('click', function () { setView('zeit', true); });
+  $('vRadar').addEventListener('click', function () { setView('radar', true); });
+
+  var editing = false;
+  $('edit').addEventListener('click', function () {
+    editing = !editing;
+    document.body.classList.toggle('editing', editing);
+    $('edit').setAttribute('aria-pressed', String(editing));
+    $('editLabel').textContent = editing ? 'Fertig' : 'Anordnen';
+  });
+  $('reset').addEventListener('click', function () {
+    apply(DEFAULT);
+    try { localStorage.removeItem(KEY); } catch (e) {}
+  });
+
+  grid.addEventListener('click', function (ev) {
+    var b = ev.target.closest('.tool'); if (!b) return;
+    var m = b.closest('.mod'), act = b.dataset.act;
+    if (act === 'wide') m.classList.toggle('w2');
+    else if (act === 'prev' && m.previousElementSibling) grid.insertBefore(m, m.previousElementSibling);
+    else if (act === 'next' && m.nextElementSibling) grid.insertBefore(m.nextElementSibling, m);
+    else return;
+    save();
+    if (act !== 'wide') b.focus();
+  });
+
+  var drag = null, lastTarget = null;
+  grid.addEventListener('pointerdown', function (ev) {
+    var g = ev.target.closest('.grip');
+    if (!g || !editing) return;
+    drag = g.closest('.mod'); lastTarget = null;
+    drag.classList.add('dragging');
+    ev.preventDefault();
+  });
+  window.addEventListener('pointermove', function (ev) {
+    if (!drag) return;
+    var el = document.elementFromPoint(ev.clientX, ev.clientY);
+    var t = el && el.closest ? el.closest('.mod') : null;
+    if (!t || t === drag || t.parentNode !== grid) { lastTarget = null; return; }
+    if (t === lastTarget) return;
+    lastTarget = t;
+    var list = mods();
+    if (list.indexOf(t) < list.indexOf(drag)) grid.insertBefore(drag, t);
+    else grid.insertBefore(drag, t.nextSibling);
+  });
+  function endDrag() {
+    if (!drag) return;
+    drag.classList.remove('dragging');
+    drag = null; lastTarget = null;
+    save();
+  }
+  window.addEventListener('pointerup', endDrag);
+  window.addEventListener('pointercancel', endDrag);
+
+  renderLists();
+  renderPeople();
+};
+</script>
+<script>
+/* Datenquelle: Auf Handy und Tablet liest die Seite daten.js über einen OneDrive-Freigabelink.
+   Der Link steht nur auf dem jeweiligen Gerät (localStorage), nie in dieser Datei.
+   Einrichten: Seite einmal mit ?daten=LINK öffnen oder unten auf „Datenquelle“ tippen. */
+(function () {
+  var KEY = 'tagesblick-quelle', CACHE = 'tagesblick-cache';
+  function ls(k, v) {
+    try { if (v === undefined) return localStorage.getItem(k); if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) {}
+    return null;
+  }
+  function note(t) { var n = document.getElementById('srcNote'); if (n) { n.textContent = t; n.hidden = !t; } }
+  function parse(text) { return JSON.parse(text.slice(text.indexOf('{'), text.lastIndexOf('}') + 1)); }
+  function api(l) {
+    if (/^https:\/\/api\.onedrive\.com\//.test(l)) return l;
+    var b = btoa(unescape(encodeURIComponent(l))).replace(/=+$/, '').replace(/\//g, '_').replace(/\+/g, '-');
+    return 'https://api.onedrive.com/v1.0/shares/u!' + b + '/root/content';
+  }
+  function start(d, msg) { window.TAGESBLICK = d; window.tagesblickInit(); note(msg || ''); }
+  var EMPTY = { personen: {}, eintraege: [], post: [], melden: [] };
+
+  var q = new URLSearchParams(location.search).get('daten');
+  if (q) { ls(KEY, q); history.replaceState(null, '', location.pathname); }
+  var link = ls(KEY);
+
+  document.addEventListener('click', function (ev) {
+    if (!ev.target.closest || !ev.target.closest('#setSrc')) return;
+    var v = window.prompt('OneDrive-Freigabelink zu daten.js einfügen (leer lassen = Link entfernen):', ls(KEY) || '');
+    if (v === null) return;
+    ls(KEY, v.trim() || null);
+    ls(CACHE, null);
+    location.reload();
+  });
+
+  if (link && /^https:\/\//i.test(link)) {
+    fetch(api(link), { cache: 'no-store' })
+      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.text(); })
+      .then(function (t) { var d = parse(t); ls(CACHE, JSON.stringify(d)); start(d); })
+      .catch(function () {
+        var c = ls(CACHE), d = null;
+        try { d = c && JSON.parse(c); } catch (e) {}
+        if (d) start(d, 'Keine Verbindung zu OneDrive oder Link ungültig. Gezeigt wird der zuletzt gespeicherte Stand.');
+        else start(EMPTY, 'Die Daten konnten nicht aus OneDrive geladen werden. Prüfe den Freigabelink unten unter „Datenquelle“.');
+      });
+  } else if (window.TAGESBLICK) {
+    start(window.TAGESBLICK);
+  } else {
+    start(EMPTY, 'Noch keine Datenquelle. Tippe unten auf „Datenquelle“ und füge den OneDrive-Link zu daten.js ein.');
+  }
+})();
+</script>
+</body>
+</html>
