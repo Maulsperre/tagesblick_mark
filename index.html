@@ -90,6 +90,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent-2); 
 .srcnote { margin: 0; padding: 8px 12px; border: 1px solid var(--bald); border-radius: 8px; color: var(--bald); font-size: 13px; flex: none; }
 #foot .btn { margin-left: 6px; }
 .chip.link { color: var(--accent); border-color: var(--accent); text-decoration: none; }
+button.chip { cursor: pointer; }
 .chip.link:hover { background: var(--accent); color: var(--bg); box-shadow: 0 0 16px var(--glow); }
 .tlink { color: inherit; text-decoration: none; border-bottom: 1px solid var(--line); }
 .tlink:hover { color: var(--accent); border-bottom-color: var(--accent); }
@@ -358,6 +359,7 @@ textarea { font-size: 13px; }
         <span class="chip" id="next" hidden></span>
         <a class="chip link" id="lGmail" href="https://mail.google.com/" target="_blank" rel="noopener">Gmail ↗</a>
         <a class="chip link" id="lKal" href="https://calendar.google.com/" target="_blank" rel="noopener">Kalender ↗</a>
+        <button class="chip link setsrc" type="button" id="srcBtn">Datenquelle</button>
         <span class="seg" role="group" aria-label="Ansicht der nächsten 14 Tage">
           <button type="button" id="vZeit" aria-pressed="true">Zeitleiste</button>
           <button type="button" id="vRadar" aria-pressed="false">Radar</button>
@@ -399,7 +401,7 @@ textarea { font-size: 13px; }
       </div></section>
     </div>
 
-    <footer id="foot">Die Daten stehen in <b>daten.js</b>. Claude und ChatGPT ändern nur diese Datei, die Seite zeigt sie an. Haken und Anordnung merkt sich die Seite auf diesem Gerät. <button class="btn" type="button" id="setSrc">Datenquelle</button></footer>
+    <footer id="foot">Die Daten stehen in <b>daten.js</b>. Claude und ChatGPT ändern nur diese Datei, die Seite zeigt sie an. Haken und Anordnung merkt sich die Seite auf diesem Gerät. <button class="btn setsrc" type="button">Datenquelle</button></footer>
   </div>
 </div>
 
@@ -441,6 +443,7 @@ window.tagesblickInit = function () {
 
   /* Welche Einträge fallen auf Tag n? */
   function occurs(e, n) {
+    if (e.datum && e.bis) return n >= diff(e.datum) && n <= diff(e.bis);
     if (e.datum) return diff(e.datum) === n;
     if (e.wochentag != null) return day(n).getDay() === Number(e.wochentag);
     return false;
@@ -489,6 +492,7 @@ window.tagesblickInit = function () {
       : e.zeit ? '<span class="when">' + esc(e.zeit) + '</span>' : '<span class="when none">––:––</span>';
     var overdue = opts.check && e.datum && diff(e.datum) < 0 ? '<span class="pill akut">überfällig seit ' + shortDate(diff(e.datum)) + '</span>' : '';
     var meta = '<span class="kind">' + esc(e.art) + '</span>' + who(e.wer) + (opts.count ? '' : pill(e.pill) + overdue);
+    if (e.bis) meta += '<span>' + shortDate(diff(e.datum)) + ' bis ' + shortDate(diff(e.bis)) + '</span>';
     if (opts.count) {
       var n = diff(e.datum), lead = e.vorlauf != null ? e.vorlauf : 3, start = n - lead;
       meta += '<span>' + shortDate(n) + (e.zeit ? ', ' + esc(e.zeit) : '') + '</span>';
@@ -526,7 +530,7 @@ window.tagesblickInit = function () {
   $('tomorrowDate').textContent = shortDate(1);
   $('aheadCount').textContent = aheadList.length ? aheadList.length + (aheadList.length === 1 ? ' Termin' : ' Termine') : '';
   $('demoChip').hidden = !D.demo;
-  if (D.demo) $('foot').innerHTML = 'Alle Einträge sind Beispieldaten. Ersetze sie in <b>daten.js</b> (siehe ANLEITUNG.md) und setze dort <b>demo</b> auf false. Haken und Anordnung merkt sich die Seite auf diesem Gerät. <button class="btn" type="button" id="setSrc">Datenquelle</button>';
+  if (D.demo) $('foot').innerHTML = 'Alle Einträge sind Beispieldaten. Ersetze sie in <b>daten.js</b> (siehe ANLEITUNG.md) und setze dort <b>demo</b> auf false. Haken und Anordnung merkt sich die Seite auf diesem Gerät. <button class="btn setsrc" type="button">Datenquelle</button>';
 
   /* Listen */
   function renderLists() {
@@ -585,7 +589,7 @@ window.tagesblickInit = function () {
       '<text class="sub" x="' + tx.toFixed(1) + '" y="' + (y + 14).toFixed(1) + '" text-anchor="' + (left ? 'end' : 'start') + '">' + esc(sub) + '</text></g>';
   }
   var radarItems = [];
-  for (var rn = 1; rn <= 14; rn++) { E.filter(function (e) { return occurs(e, this.n); }, { n: rn }).forEach(function (e) { radarItems.push({ e: e, n: rn }); }); }
+  for (var rn = 1; rn <= 14; rn++) { E.filter(function (e) { return e.bis ? e.datum && diff(e.datum) === this.n : occurs(e, this.n); }, { n: rn }).forEach(function (e) { radarItems.push({ e: e, n: rn }); }); }
   $('radar').innerHTML = '<svg class="radar" viewBox="0 0 460 360" role="img" aria-label="Radar der nächsten 14 Tage. Je näher ein Punkt an der Mitte liegt, desto früher ist der Termin.">' +
     '<line class="axis" x1="' + (CX - 160) + '" y1="' + CY + '" x2="' + (CX + 160) + '" y2="' + CY + '"/>' +
     '<line class="axis" x1="' + CX + '" y1="' + (CY - 160) + '" x2="' + CX + '" y2="' + (CY + 160) + '"/>' +
@@ -746,52 +750,75 @@ window.tagesblickInit = function () {
 };
 </script>
 <script>
-/* Datenquelle: Auf Handy und Tablet liest die Seite daten.js über einen OneDrive-Freigabelink.
-   Der Link steht nur auf dem jeweiligen Gerät (localStorage), nie in dieser Datei.
-   Einrichten: Seite einmal mit ?daten=LINK öffnen oder unten auf „Datenquelle“ tippen. */
+/* Datenquelle: Auf Handy und Tablet meldet sich die Seite bei Microsoft an und liest daten.js aus dem eigenen OneDrive.
+   Die Client-ID (keine Geheimzahl) und die Anmeldung stehen nur auf dem jeweiligen Gerät (localStorage), nie in dieser Datei. */
 (function () {
-  var KEY = 'tagesblick-quelle', CACHE = 'tagesblick-cache';
+  var KEY = 'tagesblick-client', CACHE = 'tagesblick-cache', SCOPES = ['Files.Read'];
+  var PFADE = ['Dokumente/90_Tagesplaner/daten.js', 'Documents/90_Tagesplaner/daten.js'];
+  var EMPTY = { personen: {}, eintraege: [], post: [], melden: [] };
   function ls(k, v) {
     try { if (v === undefined) return localStorage.getItem(k); if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) {}
     return null;
   }
-  function note(t) { var n = document.getElementById('srcNote'); if (n) { n.textContent = t; n.hidden = !t; } }
-  function parse(text) { return JSON.parse(text.slice(text.indexOf('{'), text.lastIndexOf('}') + 1)); }
-  function api(l) {
-    if (/^https:\/\/api\.onedrive\.com\//.test(l)) return l;
-    var b = btoa(unescape(encodeURIComponent(l))).replace(/=+$/, '').replace(/\//g, '_').replace(/\+/g, '-');
-    return 'https://api.onedrive.com/v1.0/shares/u!' + b + '/root/content';
+  function note(t, btn, fn) {
+    var n = document.getElementById('srcNote'); if (!n) return;
+    n.textContent = t || ''; n.hidden = !t;
+    if (btn) { var b = document.createElement('button'); b.type = 'button'; b.className = 'btn'; b.textContent = btn; b.style.marginLeft = '10px'; b.onclick = fn; n.appendChild(b); }
   }
-  function start(d, msg) { window.TAGESBLICK = d; window.tagesblickInit(); note(msg || ''); }
-  var EMPTY = { personen: {}, eintraege: [], post: [], melden: [] };
+  function parse(text) { return JSON.parse(text.slice(text.indexOf('{'), text.lastIndexOf('}') + 1)); }
+  function start(d, msg, btn, fn) { window.TAGESBLICK = d; window.tagesblickInit(); note(msg || '', btn, fn); }
+  function cached() { try { var c = ls(CACHE); return c && JSON.parse(c); } catch (e) { return null; } }
+  function fallback(msg, btn, fn) { var d = cached(); start(d || EMPTY, d ? msg + ' Gezeigt wird der zuletzt gespeicherte Stand.' : msg, btn, fn); }
 
-  var q = new URLSearchParams(location.search).get('daten');
-  if (q) { ls(KEY, q); history.replaceState(null, '', location.pathname); }
-  var link = ls(KEY);
+  var client = new URLSearchParams(location.search).get('client');
+  if (client) { ls(KEY, client); history.replaceState(null, '', location.pathname); }
+  client = ls(KEY);
 
   document.addEventListener('click', function (ev) {
-    if (!ev.target.closest || !ev.target.closest('#setSrc')) return;
-    var v = window.prompt('OneDrive-Freigabelink zu daten.js einfügen (leer lassen = Link entfernen):', ls(KEY) || '');
+    if (!ev.target.closest || !ev.target.closest('.setsrc')) return;
+    var v = window.prompt('Client-ID der Microsoft-App einfügen. Leer lassen = Anmeldung und Einstellung auf diesem Gerät löschen:', ls(KEY) || '');
     if (v === null) return;
-    ls(KEY, v.trim() || null);
-    ls(CACHE, null);
+    v = v.trim();
+    if (!v) { try { Object.keys(localStorage).forEach(function (k) { if (/^msal\./i.test(k) || k === CACHE) localStorage.removeItem(k); }); } catch (e) {} }
+    ls(KEY, v || null);
     location.reload();
   });
 
-  if (link && /^https:\/\//i.test(link)) {
-    fetch(api(link), { cache: 'no-store' })
-      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.text(); })
-      .then(function (t) { var d = parse(t); ls(CACHE, JSON.stringify(d)); start(d); })
-      .catch(function () {
-        var c = ls(CACHE), d = null;
-        try { d = c && JSON.parse(c); } catch (e) {}
-        if (d) start(d, 'Keine Verbindung zu OneDrive oder Link ungültig. Gezeigt wird der zuletzt gespeicherte Stand.');
-        else start(EMPTY, 'Die Daten konnten nicht aus OneDrive geladen werden. Prüfe den Freigabelink unten unter „Datenquelle“.');
+  if (client) {
+    var sc = document.createElement('script');
+    sc.src = 'https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.20.0/lib/msal-browser.min.js';
+    sc.onerror = function () { fallback('Die Microsoft-Anmeldung konnte nicht geladen werden (keine Verbindung?).'); };
+    sc.onload = function () {
+      var app = new msal.PublicClientApplication({
+        auth: { clientId: client, authority: 'https://login.microsoftonline.com/consumers', redirectUri: location.origin + location.pathname },
+        cache: { cacheLocation: 'localStorage' }
       });
+      function login() { app.loginRedirect({ scopes: SCOPES }); }
+      function lade(token, i) {
+        return fetch('https://graph.microsoft.com/v1.0/me/drive/root:/' + PFADE[i] + ':/content', { headers: { Authorization: 'Bearer ' + token }, cache: 'no-store' })
+          .then(function (r) {
+            if (r.status === 404 && i + 1 < PFADE.length) return lade(token, i + 1);
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            return r.text();
+          });
+      }
+      app.initialize().then(function () { return app.handleRedirectPromise(); }).then(function (res) {
+        var acc = (res && res.account) || app.getAllAccounts()[0];
+        if (!acc) return start(cached() || EMPTY, 'Noch nicht angemeldet.', 'Bei Microsoft anmelden', login);
+        return app.acquireTokenSilent({ scopes: SCOPES, account: acc })
+          .catch(function () { start(cached() || EMPTY, 'Die Anmeldung ist abgelaufen.', 'Neu anmelden', login); throw null; })
+          .then(function (t) { return lade(t.accessToken, 0); })
+          .then(function (txt) { var d = parse(txt); ls(CACHE, JSON.stringify(d)); start(d); });
+      }).catch(function (e) {
+        if (e === null) return;
+        fallback('Daten konnten nicht aus OneDrive geladen werden (' + ((e && (e.errorCode || e.message)) || 'Fehler') + ').', 'Neu anmelden', login);
+      });
+    };
+    document.head.appendChild(sc);
   } else if (window.TAGESBLICK) {
     start(window.TAGESBLICK);
   } else {
-    start(EMPTY, 'Noch keine Datenquelle. Tippe unten auf „Datenquelle“ und füge den OneDrive-Link zu daten.js ein.');
+    start(EMPTY, 'Noch keine Datenquelle. Tippe oben auf „Datenquelle“ und füge die Client-ID ein (siehe ANLEITUNG_Tablet.md).');
   }
 })();
 </script>
