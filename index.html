@@ -222,7 +222,9 @@ input[type="checkbox"]:checked::after { content: ""; width: 10px; height: 5px; b
 .row:last-child { padding-bottom: 0; }
 .row .from { font-size: 13px; color: var(--muted); display: flex; justify-content: space-between; gap: 6px 10px; flex-wrap: wrap; align-items: center; }
 .zr { display: grid; gap: 8px; }
-.zr-helpwrap { margin: 0; display: inline-block; }
+.zr-act .zr-helpwrap { margin: 0; display: inline-flex; }
+.zr-mic.on { border-color: var(--akut, #e5484d); color: var(--akut, #e5484d); animation: zrPulse 1.2s ease-in-out infinite; }
+@keyframes zrPulse { 50% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--akut, #e5484d) 30%, transparent); } }
 @media (hover: hover) { #zrHelpBtn:hover + .mail-report-tip, #zrHelpBtn:focus-visible + .mail-report-tip { display: block; } }
 .zr-guide q { color: var(--ink); font-style: italic; }
 .zr-guide p + p { margin-top: 4px; }
@@ -553,6 +555,7 @@ html[data-theme="ueberraschung"] .editbtn:hover, html[data-theme="ueberraschung"
           <textarea id="zrText" rows="3" placeholder="Schreib einfach, was ich tun soll, zum Beispiel: Pauline hat am 5.12. um 15 Uhr Zahnarzt." required></textarea>
           <div class="zr-act">
             <button class="btn zr-send" type="submit" id="zrSend">Senden</button>
+            <button class="btn zr-mic" type="button" id="zrMic" hidden aria-pressed="false" title="Diktieren">🎤 Diktieren</button>
             <span class="mail-report-bar zr-helpwrap"><button class="btn" type="button" id="zrHelpBtn">Hilfe</button><span class="mail-report-tip" id="zrHelpTip" role="tooltip">
               <b>Schnellhilfe</b>
               <p>Schreib in ganzen Sätzen, was ich tun soll: Wer, was, wann. Ich hole Zurufe stündlich ab, trage sie ein und antworte hier darunter.</p>
@@ -566,7 +569,7 @@ html[data-theme="ueberraschung"] .editbtn:hover, html[data-theme="ueberraschung"
           <h3><span>Hilfe zu Tagesblick</span><button class="x" type="button" aria-label="Schließen">✕</button></h3>
 
           <section class="rep"><h4>Zuruf an Claude</h4>
-            <p>Schreib einfach, was du willst, wie in einer Nachricht an eine Sekretärin. Am Handy kannst du über das Mikrofon der Tastatur diktieren. Mit Senden geht der Zuruf in deinen OneDrive-Ordner (nachrichten.json). Ich hole ihn stündlich zwischen 8 und 21 Uhr ab, dazu bei den Läufen um 9 Uhr (am Wochenende 11 Uhr) und um 19 Uhr. Unter dem Zuruf steht dann der Status: <i>wartet auf Claude</i>, <i>erledigt</i> mit meiner Antwort oder <i>Rückfrage</i>.</p>
+            <p>Schreib einfach, was du willst, wie in einer Nachricht an eine Sekretärin. Mit <b>🎤 Diktieren</b> sprichst du den Text ein, am PC und am Handy. Ein zweiter Klick auf <b>■ Stopp</b> beendet das Diktat. Beim ersten Mal fragt der Browser nach dem Mikrofon. Am PC geht außerdem überall Windows-Taste + H. Mit Senden geht der Zuruf in deinen OneDrive-Ordner (nachrichten.json). Ich hole ihn stündlich zwischen 8 und 21 Uhr ab, dazu bei den Läufen um 9 Uhr (am Wochenende 11 Uhr) und um 19 Uhr. Unter dem Zuruf steht dann der Status: <i>wartet auf Claude</i>, <i>erledigt</i> mit meiner Antwort oder <i>Rückfrage</i>.</p>
             <p>Ohne Netz bleibt der Zuruf als <i>noch nicht gesendet</i> auf dem Gerät und geht beim nächsten Öffnen raus.</p>
           </section>
 
@@ -1169,6 +1172,29 @@ window.tagesblickInit = function () {
   }
   function bind() {
     bound = true;
+    /* Diktieren: Spracherkennung des Browsers (Chrome, Edge), Text wird ans Feld angehängt */
+    var SR = window.SpeechRecognition || window.webkitSpeechRecognition, mic = $('zrMic'), rec = null, basis = '';
+    if (SR) {
+      mic.hidden = false;
+      var stopMic = function () { mic.classList.remove('on'); mic.setAttribute('aria-pressed', 'false'); mic.textContent = '🎤 Diktieren'; rec = null; };
+      mic.addEventListener('click', function () {
+        if (rec) { rec.stop(); return; }
+        rec = new SR(); rec.lang = 'de-DE'; rec.continuous = true; rec.interimResults = true;
+        var ta = $('zrText'); basis = ta.value ? ta.value.replace(/\s*$/, ' ') : '';
+        rec.onresult = function (ev) {
+          var fertig = '', vorlaeufig = '';
+          for (var i = ev.resultIndex; i < ev.results.length; i++) {
+            if (ev.results[i].isFinal) fertig += ev.results[i][0].transcript; else vorlaeufig += ev.results[i][0].transcript;
+          }
+          if (fertig) basis += fertig.trim() + ' ';
+          ta.value = basis + vorlaeufig;
+        };
+        rec.onerror = function (ev) { msg(ev.error === 'not-allowed' ? 'Mikrofon nicht erlaubt. Bitte im Browser für diese Seite freigeben.' : 'Diktieren unterbrochen (' + ev.error + ').'); };
+        rec.onend = function () { $('zrText').value = basis.trim(); stopMic(); if ($('zrMsg').textContent === 'Ich höre zu …') msg(''); };
+        try { rec.start(); mic.classList.add('on'); mic.setAttribute('aria-pressed', 'true'); mic.textContent = '■ Stopp'; msg('Ich höre zu …'); }
+        catch (e) { stopMic(); }
+      });
+    }
     /* Hilfe: Maus darüber = Schnellhilfe, Klick = ausführliche Hilfe im schwebenden Fenster */
     var hb = $('zrHelpBtn'), guide = $('zrGuide');
     hb.addEventListener('mouseenter', place); hb.addEventListener('focus', place);
