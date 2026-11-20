@@ -222,15 +222,13 @@ input[type="checkbox"]:checked::after { content: ""; width: 10px; height: 5px; b
 .row:last-child { padding-bottom: 0; }
 .row .from { font-size: 13px; color: var(--muted); display: flex; justify-content: space-between; gap: 6px 10px; flex-wrap: wrap; align-items: center; }
 .zr { display: grid; gap: 8px; }
-.zr-arten { display: flex; flex-wrap: wrap; gap: 6px; }
-.zr-arten button { padding: 5px 10px; border: 1px solid var(--line); border-radius: 999px; background: transparent; color: var(--muted); font: inherit; font-size: .88em; cursor: pointer; }
-.zr-arten button.on { border-color: var(--accent); color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); }
-.zr-row { display: flex; flex-wrap: wrap; gap: 8px; }
-.zr-row label { display: grid; gap: 3px; flex: 1 1 110px; font-size: .8em; color: var(--muted); }
-.zr select, .zr input, .zr textarea { width: 100%; box-sizing: border-box; padding: 7px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel, transparent); color: var(--ink); font: inherit; color-scheme: dark; }
-.zr select option { color: #111; background: #fff; }
+.zr-helpwrap { margin: 0; display: inline-block; }
+@media (hover: hover) { #zrHelpBtn:hover + .mail-report-tip, #zrHelpBtn:focus-visible + .mail-report-tip { display: block; } }
+.zr-guide q { color: var(--ink); font-style: italic; }
+.zr-guide p + p { margin-top: 4px; }
+.zr textarea { width: 100%; box-sizing: border-box; padding: 7px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel, transparent); color: var(--ink); font: inherit; color-scheme: dark; }
 .zr textarea { resize: vertical; min-height: 64px; }
-.zr select:focus, .zr input:focus, .zr textarea:focus { outline: none; border-color: var(--accent); }
+.zr textarea:focus { outline: none; border-color: var(--accent); }
 .zr-act { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .zr-send { border-color: var(--accent); color: var(--accent); }
 .zr-msg { font-size: .85em; color: var(--muted); }
@@ -551,32 +549,76 @@ html[data-theme="ueberraschung"] .editbtn:hover, html[data-theme="ueberraschung"
       <section class="mod" data-id="melden" data-title="Mal wieder melden" data-note-id="peopleCount"><div class="mbody"><div id="people"></div></div></section>
       <section class="mod" data-id="zuruf" data-title="Zuruf an Claude" data-note-id="zrCount"><div class="mbody">
         <form class="zr" id="zrForm" autocomplete="off">
-          <div class="zr-arten" id="zrArt" role="radiogroup" aria-label="Art">
-            <button type="button" data-art="Termin">Termin</button><button type="button" data-art="Aufgabe">Aufgabe</button><button type="button" data-art="Erinnern">Erinnern</button><button type="button" data-art="Melden">Melden</button><button type="button" data-art="Notiz" class="on">Sonstiges</button>
-          </div>
-          <div class="zr-row">
-            <label>Für<select id="zrWer"></select></label>
-            <label>Datum<input type="date" id="zrDatum"></label>
-            <label>Uhrzeit<input type="time" id="zrZeit"></label>
-          </div>
           <div class="zr-bezug" id="zrBezug" hidden></div>
-          <textarea id="zrText" rows="3" placeholder="Was soll ich eintragen oder erledigen? Am Handy geht auch das Mikrofon der Tastatur." required></textarea>
+          <textarea id="zrText" rows="3" placeholder="Schreib einfach, was ich tun soll, zum Beispiel: Pauline hat am 5.12. um 15 Uhr Zahnarzt." required></textarea>
           <div class="zr-act">
             <button class="btn zr-send" type="submit" id="zrSend">Senden</button>
-            <button class="btn" type="button" id="zrHelpBtn" aria-expanded="false">Hilfe</button>
+            <span class="mail-report-bar zr-helpwrap"><button class="btn" type="button" id="zrHelpBtn">Hilfe</button><span class="mail-report-tip" id="zrHelpTip" role="tooltip">
+              <b>Schnellhilfe</b>
+              <p>Schreib in ganzen Sätzen, was ich tun soll: Wer, was, wann. Ich hole Zurufe stündlich ab, trage sie ein und antworte hier darunter.</p>
+              <ul><li>„Pauline hat am 5.12. um 15 Uhr Zahnarzt.“</li><li>„Erinnere mich morgen um 8 an die Rücksendung.“</li><li>„Bei Jonas will ich mich melden.“</li></ul>
+              <p>Klick auf Hilfe für alle Funktionen von Tagesblick.</p>
+            </span></span>
             <span class="zr-msg" id="zrMsg" role="status"></span>
           </div>
         </form>
-        <div class="zr-help" id="zrHelp" hidden>
-          <p class="why">Claude holt die Zurufe ab: werktags um 9 Uhr, am Wochenende und an Feiertagen um 11 Uhr und jeden Abend um 19 Uhr. Er trägt sie in Tagesblick ein, legt Alarme an und schreibt dir hier die Antwort. Wenn etwas fehlt, steht hier eine Rückfrage, die du mit „Antworten“ beantwortest.</p>
-          <ul class="said">
-            <li><q>Pauline hat am 5.12. um 15 Uhr Zahnarzt.</q><span class="then">Art Termin, Für Pauline, Datum und Uhrzeit. Daraus wird ein Termin mit Vorlauf und Unterlagen.</span></li>
-            <li><q>Steuerberater Kieser anrufen.</q><span class="then">Art Aufgabe. Kommt unter Heute zum Abhaken, die Priorität steigt mit der Zeit.</span></li>
-            <li><q>Morgen um 8 an die Rücksendung erinnern.</q><span class="then">Art Erinnern. Daraus wird ein Alarm in deinem Kalender.</span></li>
-            <li><q>Von Jonas habe ich lange nichts gehört.</q><span class="then">Art Melden. Kommt unter „Mal wieder melden“.</span></li>
-          </ul>
-          <p class="why">Mails an andere Menschen schickt Claude nie von selbst, dafür kommt eine Rückfrage. Die Regeln für die KI stehen in <b>ANLEITUNG.md</b>.</p>
-        </div>
+        <dialog class="mail-report zr-guide" id="zrGuide" aria-label="Hilfe zu Tagesblick">
+          <h3><span>Hilfe zu Tagesblick</span><button class="x" type="button" aria-label="Schließen">✕</button></h3>
+
+          <section class="rep"><h4>Zuruf an Claude</h4>
+            <p>Schreib einfach, was du willst, wie in einer Nachricht an eine Sekretärin. Am Handy kannst du über das Mikrofon der Tastatur diktieren. Mit Senden geht der Zuruf in deinen OneDrive-Ordner (nachrichten.json). Ich hole ihn stündlich zwischen 8 und 21 Uhr ab, dazu bei den Läufen um 9 Uhr (am Wochenende 11 Uhr) und um 19 Uhr. Unter dem Zuruf steht dann der Status: <i>wartet auf Claude</i>, <i>erledigt</i> mit meiner Antwort oder <i>Rückfrage</i>.</p>
+            <p>Ohne Netz bleibt der Zuruf als <i>noch nicht gesendet</i> auf dem Gerät und geht beim nächsten Öffnen raus.</p>
+          </section>
+
+          <section class="rep"><h4>Termin eintragen</h4>
+            <p><q>Pauline hat am 5.12. um 15 Uhr Zahnarzt bei Dr. Huber.</q></p>
+            <p>Daraus wird ein Termin für Pauline. Er steht schon eine Woche vorher unter „Rückt näher“ und hat eine Liste der Unterlagen (Versichertenkarte und Ähnliches).</p>
+          </section>
+
+          <section class="rep"><h4>Aufgabe anlegen</h4>
+            <p><q>Ich muss den Steuerberater Kieser anrufen.</q></p>
+            <p>Die Aufgabe steht unter Heute zum Abhaken. Hat sie keine Frist, steigt die Priorität von selbst: nach 3 Tagen auf erhöht, nach 7 Tagen auf hoch. Mit Frist (<q>… bis Freitag</q>) wird sie danach als überfällig markiert.</p>
+          </section>
+
+          <section class="rep"><h4>Erinnern mit Alarm</h4>
+            <p><q>Erinnere mich morgen um 8 an die Amazon-Rücksendung.</q></p>
+            <p>Ich lege in deinem Google-Kalender einen „⏰“-Termin an, der zur Uhrzeit klingelt. Ohne Uhrzeit wähle ich eine sinnvolle Zeit.</p>
+          </section>
+
+          <section class="rep"><h4>Wöchentliche Hinweise</h4>
+            <p><q>Dienstags hat Luise Ethik, da braucht sie Unterstützung.</q></p>
+            <p>Der Hinweis erscheint jede Woche am Tag davor und am Tag selbst. Auf dem Radar ist er mit ★ markiert.</p>
+          </section>
+
+          <section class="rep"><h4>Mal wieder melden</h4>
+            <p><q>Bei Jonas habe ich mich seit Oktober nicht gemeldet.</q></p>
+            <p>Jonas kommt unter „Mal wieder melden“. Hast du dich gemeldet, tippst du dort auf „Habe mich gemeldet“.</p>
+          </section>
+
+          <section class="rep"><h4>Rückfragen beantworten</h4>
+            <p>Fehlt mir etwas, steht unter deinem Zuruf eine <i>Rückfrage</i>, zum Beispiel <q>Um wie viel Uhr?</q>. Tipp auf <b>Antworten</b>, schreib <q>15 Uhr</q> und sende. Ich verbinde beides.</p>
+          </section>
+
+          <section class="rep"><h4>Erledigt abhaken</h4>
+            <p>Unter Heute hakst du Aufgaben ab. Der Haken gilt auf allen Geräten. Abgehaktes bleibt bis zum nächsten Morgen durchgestrichen sichtbar und verschwindet dann. Ein neuer Tag beginnt um 5 Uhr.</p>
+          </section>
+
+          <section class="rep"><h4>Posteingang und E-Mail-Berichte</h4>
+            <p>Die E-Mail-Runde um 7 und 18 Uhr sortiert deine Mails. Was du tun musst, wird eine Aufgabe mit Link zur Mail. Mit der Maus über <b>E-Mail-Berichte</b> zeigt sich der letzte Bericht, ein Klick öffnet alle zum Scrollen. „Antwort-Auftrag kopieren“ gibt dir einen Text, mit dem Claude oder ChatGPT einen Antwortentwurf schreibt.</p>
+          </section>
+
+          <section class="rep"><h4>Alarme und Rückblick</h4>
+            <p>Werktags um 9 Uhr (am Wochenende und an Feiertagen um 11 Uhr) lege ich für die wichtigsten offenen Aufgaben kurze Alarme in deinen Kalender, jeweils mit einem kleinen ersten Schritt, zum Beispiel <q>⏰ 10 Min: 3 Stichpunkte für die Antwort an die Anwältin</q>. Um 19 Uhr kommt ein Rückblick als Push-Nachricht.</p>
+          </section>
+
+          <section class="rep"><h4>Ansicht anpassen</h4>
+            <p><b>Radar/Zeitleiste</b> schaltet zwischen den zwei Ansichten der nächsten 14 Tage um. Mit <b>Design</b> wählst du Farben, Schrift und Schriftgröße. Mit dem Pfeil ↔ oben an jedem Feld machst du es breiter. Mit <b>Anordnen</b> verschiebst du die Felder. Links filterst du nach Person.</p>
+          </section>
+
+          <section class="rep"><h4>Was ich nicht von selbst tue</h4>
+            <p>Mails oder Nachrichten an andere schicken, etwas löschen oder bezahlen. Darum bitte ich dich immer erst per Rückfrage. Passwörter, Kontonummern und Diagnosen kommen nicht in Tagesblick.</p>
+          </section>
+        </dialog>
         <ul class="zr-list" id="zrList"></ul>
       </div></section>
     </div>
@@ -1088,7 +1130,7 @@ window.tagesblickInit = function () {
    Ohne Verbindung bleiben sie auf dem Gerät und werden beim nächsten Start gesendet. */
 (function () {
   var PEND = 'tagesblick-zuruf-offen', LIST = 'tagesblick-zuruf-liste';
-  var art = 'Notiz', bezug = null, bound = false, P = {};
+  var bezug = null, bound = false, P = {};
   function $(id) { return document.getElementById(id); }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
   function get(k, d) { try { return JSON.parse(localStorage.getItem(k) || 'null') || d; } catch (e) { return d; } }
@@ -1108,9 +1150,8 @@ window.tagesblickInit = function () {
     var rf = all.filter(function (m) { return m.status === 'rueckfrage'; }).length;
     if ($('zrCount')) $('zrCount').textContent = rf ? rf + ' Rückfrage' + (rf > 1 ? 'n' : '') : offen ? offen + ' offen' : '';
     $('zrList').innerHTML = all.slice(0, 12).map(function (m) {
-      var s = STATUS[m.status] || STATUS.offen, who = P[m.wer] ? P[m.wer].name : '';
-      var extra = [m.art && m.art !== 'Notiz' ? m.art : '', who, m.datum ? m.datum.split('-').reverse().slice(0, 2).join('.') + '.' : '', m.uhrzeit || ''].filter(Boolean).join(' · ');
-      return '<li><div class="zr-meta"><span class="pill ' + s[0] + '">' + s[1] + '</span><span>' + esc(when(m.zeit)) + '</span>' + (extra ? '<span>' + esc(extra) + '</span>' : '') + '</div>' +
+      var s = STATUS[m.status] || STATUS.offen;
+      return '<li><div class="zr-meta"><span class="pill ' + s[0] + '">' + s[1] + '</span><span>' + esc(when(m.zeit)) + '</span></div>' +
         '<p class="zr-t">' + esc(m.text) + '</p>' + (m.antwort ? '<p class="zr-a">' + esc(m.antwort) + '</p>' : '') +
         (m.status === 'rueckfrage' ? '<button class="btn zr-reply" type="button" data-reply="' + esc(m.id) + '">Antworten</button>' : '') + '</li>';
     }).join('') || '<li class="empty">Noch keine Zurufe. Schreib oben, was ich eintragen oder erledigen soll.</li>';
@@ -1128,12 +1169,22 @@ window.tagesblickInit = function () {
   }
   function bind() {
     bound = true;
-    $('zrArt').addEventListener('click', function (ev) {
-      var b = ev.target.closest('button[data-art]'); if (!b) return;
-      art = b.getAttribute('data-art');
-      [].forEach.call($('zrArt').children, function (x) { x.classList.toggle('on', x === b); });
+    /* Hilfe: Maus darüber = Schnellhilfe, Klick = ausführliche Hilfe im schwebenden Fenster */
+    var hb = $('zrHelpBtn'), guide = $('zrGuide');
+    hb.addEventListener('mouseenter', place); hb.addEventListener('focus', place);
+    function place() {
+      var r = hb.getBoundingClientRect(), tip = $('zrHelpTip');
+      var shell = hb.closest('.shell'), z = shell ? parseFloat(getComputedStyle(shell).zoom) || 1 : 1;
+      var top = r.bottom + 6; if (top + 220 > window.innerHeight) top = Math.max(8, r.top - 226);
+      tip.style.left = Math.max(8, Math.min(r.left, window.innerWidth - 396)) / z + 'px';
+      tip.style.top = top / z + 'px';
+    }
+    hb.addEventListener('click', function () { if (guide.showModal) guide.showModal(); else guide.setAttribute('open', ''); guide.scrollTop = 0; });
+    guide.addEventListener('click', function (ev) {
+      var r = guide.getBoundingClientRect();
+      var outside = ev.clientX < r.left || ev.clientX > r.right || ev.clientY < r.top || ev.clientY > r.bottom;
+      if (outside || ev.target.closest('.x')) { if (guide.close) guide.close(); else guide.removeAttribute('open'); }
     });
-    $('zrHelpBtn').addEventListener('click', function () { var h = $('zrHelp'); h.hidden = !h.hidden; this.setAttribute('aria-expanded', String(!h.hidden)); });
     $('zrList').addEventListener('click', function (ev) {
       var b = ev.target.closest('[data-reply]'); if (!b) return;
       var m = get(LIST, []).filter(function (x) { return x.id === b.getAttribute('data-reply'); })[0]; if (!m) return;
@@ -1145,20 +1196,16 @@ window.tagesblickInit = function () {
     $('zrForm').addEventListener('submit', function (ev) {
       ev.preventDefault();
       var text = $('zrText').value.trim(); if (!text) return;
-      var m = { id: 'z' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), zeit: new Date().toISOString(), art: art, wer: $('zrWer').value,
-        datum: $('zrDatum').value || '', uhrzeit: $('zrZeit').value || '', text: text, status: 'offen' };
+      var m = { id: 'z' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), zeit: new Date().toISOString(), text: text, status: 'offen' };
       if (bezug) m.bezug = bezug;
       var pend = get(PEND, []); pend.push(m); put(PEND, pend);
-      $('zrText').value = ''; $('zrDatum').value = ''; $('zrZeit').value = ''; bezug = null; $('zrBezug').hidden = true;
-      art = 'Notiz'; [].forEach.call($('zrArt').children, function (x) { x.classList.toggle('on', x.getAttribute('data-art') === 'Notiz'); });
+      $('zrText').value = ''; bezug = null; $('zrBezug').hidden = true;
       render(); flush();
     });
   }
   window.tbZuruf = function (D) {
     if (!$('zrForm')) return;
     P = (D && D.personen) || {};
-    var sel = $('zrWer'), keys = Object.keys(P);
-    sel.innerHTML = (keys.length ? keys : ['ich']).map(function (k) { return '<option value="' + esc(k) + '"' + (k === 'ich' ? ' selected' : '') + '>' + esc(P[k] ? P[k].name : k) + '</option>'; }).join('');
     if (!bound) bind();
     render();
     var io = window.TB_ZR_IO;
