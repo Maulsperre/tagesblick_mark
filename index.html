@@ -221,6 +221,23 @@ input[type="checkbox"]:checked::after { content: ""; width: 10px; height: 5px; b
 .row:first-child { border-top: 0; padding-top: 0; }
 .row:last-child { padding-bottom: 0; }
 .row .from { font-size: 13px; color: var(--muted); display: flex; justify-content: space-between; gap: 6px 10px; flex-wrap: wrap; align-items: center; }
+.mail-report-bar { margin-bottom: 10px; position: relative; }
+.mail-report-tip { display: none; position: fixed; left: 16px; top: 16px; z-index: 25; width: min(380px, calc(100vw - 48px)); padding: 10px 12px; border: 1px solid var(--accent); border-radius: 10px; background: var(--bg); color: var(--ink); box-shadow: 0 12px 40px rgba(0,0,0,.45); font-size: .9em; pointer-events: none; }
+.mail-report-tip b { display: block; margin-bottom: 4px; color: var(--accent); font-family: var(--display); }
+.mail-report-tip p { margin: 0; color: var(--muted); }
+.mail-report-tip ul { margin: 6px 0 0; padding-left: 1.2em; }
+@media (hover: hover) { #mailReportBtn:hover + .mail-report-tip, #mailReportBtn:focus-visible + .mail-report-tip { display: block; } }
+.mail-report .rep { padding: 10px 0; border-top: 1px solid var(--line); }
+.mail-report .rep:first-of-type { border-top: 0; padding-top: 2px; }
+.mail-report .rep h4 { margin: 0 0 4px; font-size: .92em; color: var(--accent-2, var(--accent)); }
+.mail-report .rep.latest h4 { color: var(--accent); }
+.mail-report { width: min(460px, calc(100vw - 32px)); max-height: calc(100vh - 64px); overflow-y: auto; overflow-x: hidden; box-sizing: border-box; padding: 16px 18px; border: 1px solid var(--accent); border-radius: 12px; background: var(--bg); color: var(--ink); box-shadow: 0 18px 60px rgba(0,0,0,.45), 0 0 30px var(--glow); font-family: var(--body); }
+.mail-report::backdrop { background: rgba(0,0,0,.55); }
+.mail-report h3 { margin: 0 0 8px; font-family: var(--display); font-size: 1.05em; color: var(--accent); display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.mail-report .x { border: 1px solid var(--line); border-radius: 50%; width: 28px; height: 28px; flex: none; background: transparent; color: var(--muted); cursor: pointer; }
+.mail-report p { margin: 0; color: var(--muted); }
+.mail-report ul { margin: 6px 0 0; padding-left: 1.3em; }
+.mail-report li + li { margin-top: 3px; }
 .sorted { display: flex; flex-wrap: wrap; gap: 4px 14px; font-family: var(--mono); font-size: 12px; color: var(--muted); padding-top: 12px; border-top: 1px solid var(--line); font-variant-numeric: tabular-nums; }
 .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
 .btn { font-family: var(--mono); font-size: 12px; letter-spacing: .05em; text-transform: uppercase; color: var(--accent); background: transparent; border: 1px solid var(--line); border-radius: 4px; padding: 6px 10px; cursor: pointer; }
@@ -508,7 +525,7 @@ html[data-theme="ueberraschung"] .editbtn:hover, html[data-theme="ueberraschung"
       <section class="mod" data-id="radar" data-title="Radar" data-note="14 Tage" hidden><div class="mbody"><div id="radar"></div><div class="legend" id="legend"></div></div></section>
       <section class="mod" data-id="morgen" data-title="Morgen im Blick" data-note-id="tomorrowDate"><div class="mbody"><ul class="items" id="tomorrow"></ul></div></section>
       <section class="mod" data-id="kommend" data-title="Rückt näher" data-note-id="aheadCount"><div class="mbody"><ul class="items" id="ahead"></ul></div></section>
-      <section class="mod w2" data-id="post" data-title="Posteingang" data-note-id="mailCount"><div class="mbody"><div id="mail"></div><div class="sorted" id="sorted"></div></div></section>
+      <section class="mod w2" data-id="post" data-title="Posteingang" data-note-id="mailCount"><div class="mbody"><div class="mail-report-bar" id="mailReportBar" hidden><button class="btn" type="button" id="mailReportBtn">E-Mail-Berichte</button><div class="mail-report-tip" id="mailReportTip" role="tooltip"></div></div><dialog id="mailReport" class="mail-report" aria-label="E-Mail-Mini-Bericht"></dialog><div id="mail"></div><div class="sorted" id="sorted"></div></div></section>
       <section class="mod" data-id="melden" data-title="Mal wieder melden" data-note-id="peopleCount"><div class="mbody"><div id="people"></div></div></section>
       <section class="mod" data-id="zuruf" data-title="So kommen Einträge rein"><div class="mbody">
         <ul class="said">
@@ -531,7 +548,16 @@ if (location.protocol === 'file:' || location.hostname === 'localhost') document
 <script>
 window.tagesblickInit = function () {
   var D = window.TAGESBLICK || { personen: {}, eintraege: [], post: [], melden: [] };
-  var T = new Date(); T.setHours(0, 0, 0, 0);
+  /* Ein neuer Tag beginnt um 5 Uhr früh: vorher gilt noch der Vortag. */
+  var DAY_START = 5;
+  function logicalDay() { var d = new Date(); if (d.getHours() < DAY_START) d.setDate(d.getDate() - 1); d.setHours(0, 0, 0, 0); return d; }
+  var T = logicalDay();
+  if (!window.TB_DAYWATCH) { /* Um 5 Uhr (oder beim Zurückkehren zur Seite danach) neu laden, damit der neue Tag erscheint. */
+    window.TB_DAYWATCH = T.getTime();
+    var dayCheck = function () { if (logicalDay().getTime() !== window.TB_DAYWATCH) location.reload(); };
+    setInterval(dayCheck, 60000);
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) dayCheck(); });
+  }
   function day(n) { var d = new Date(T); d.setDate(d.getDate() + n); return d; }
   function fmt(n, o) { return day(n).toLocaleDateString('de-DE', o); }
   function wd(n) { return fmt(n, { weekday: 'long' }); }
@@ -563,6 +589,12 @@ window.tagesblickInit = function () {
   var TODAY_ISO = T.getFullYear() + '-' + String(T.getMonth() + 1).padStart(2, '0') + '-' + String(T.getDate()).padStart(2, '0');
   function dkey(e) { return e.wochentag != null ? e.id + '@' + TODAY_ISO : e.id; } /* Wiederkehrendes gilt nur für den heutigen Tag */
   function isDone(e) { return !!(e.erledigt || doneSet[dkey(e)]); }
+  /* Haken tragen das Datum des Abhakens. Abgehaktes verschwindet am nächsten Tag; alte Haken ohne Datum gelten als älter. */
+  function doneEarlier(e) {
+    var v = e.erledigt || doneSet[dkey(e)];
+    if (!v) return false;
+    return typeof v === 'string' && /^\d{4}-\d\d-\d\d$/.test(v) ? v < TODAY_ISO : true;
+  }
 
   /* Welche Einträge fallen auf Tag n? */
   function occurs(e, n) {
@@ -584,7 +616,7 @@ window.tagesblickInit = function () {
   var E = (D.eintraege || []).map(function (e, i) { e._i = i; return e; });
   var todayList = E.filter(function (e) { return occurs(e, 0) || isUndatedTask(e); });
   E.forEach(function (e) { if (e.datum && diff(e.datum) < 0 && !isDone(e) && OVERDUE.indexOf(e.art) >= 0) todayList.push(e); });
-  todayList = todayList.filter(function (e, i, a) { return a.indexOf(e) === i; }).sort(function (a, b) {
+  todayList = todayList.filter(function (e, i, a) { return a.indexOf(e) === i && !doneEarlier(e); }).sort(function (a, b) {
     return byTime(a, b) || Number(!!isUndatedTask(a)) - Number(!!isUndatedTask(b)) ||
       (isUndatedTask(a) && isUndatedTask(b) ? taskAge(b) - taskAge(a) : 0);
   });
@@ -688,8 +720,9 @@ window.tagesblickInit = function () {
     li.classList.toggle('done', ev.target.checked);
     var id = ev.target.getAttribute('data-id');
     var en = (D.eintraege || []).filter(function (x) { return x.id === id; })[0], key = en ? dkey(en) : id;
-    if (ERL) ERL.set(key, ev.target.checked);
-    else { if (ev.target.checked) doneSet[key] = 1; else delete doneSet[key]; store('tagesblick-erledigt', doneSet); }
+    var val = ev.target.checked ? TODAY_ISO : null;
+    if (ERL) ERL.set(key, val);
+    else { if (val) doneSet[key] = val; else delete doneSet[key]; store('tagesblick-erledigt', doneSet); }
     updateOpen();
   });
 
@@ -768,6 +801,40 @@ window.tagesblickInit = function () {
     if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(ok, function () { window.prompt('Zum Kopieren:', txt); });
     else window.prompt('Zum Kopieren:', txt);
   });
+  /* E-Mail-Berichte: Liste "mailBerichte" (neueste zuerst), ein einzelner alter "mailBericht" wird mitgenommen. */
+  var reports = (D.mailBerichte || []).slice();
+  if (D.mailBericht && !reports.some(function (r) { return r.datum === D.mailBericht.datum && (r.zeit || '') === (D.mailBericht.zeit || ''); })) reports.push(D.mailBericht);
+  reports = reports.filter(function (r) { return r && r.datum; }).sort(function (a, b) {
+    return (b.datum + (b.zeit || '')).localeCompare(a.datum + (a.zeit || ''));
+  });
+  var reportBox = $('mailReport');
+  function reportWhen(r) { return shortDate(diff(r.datum)) + (r.zeit ? ', ' + r.zeit : ''); }
+  function reportHtml(r) {
+    return '<p>' + esc(r.kurzfassung) + '</p>' + (r.punkte && r.punkte.length
+      ? '<ul>' + r.punkte.map(function (punkt) { return '<li>' + esc(punkt) + '</li>'; }).join('') + '</ul>' : '');
+  }
+  $('mailReportBar').hidden = !reports.length;
+  if (reports.length) {
+    $('mailReportBtn').textContent = 'E-Mail-Berichte (' + reports.length + ') · zuletzt ' + reportWhen(reports[0]);
+    /* Mauszeiger auf dem Knopf: kleine Vorschau des letzten Berichts */
+    $('mailReportTip').innerHTML = '<b>Letzter Bericht · ' + esc(reportWhen(reports[0])) + '</b>' + reportHtml(reports[0]);
+    /* Klick: schwebendes Fenster mit allen Berichten zum Scrollen */
+    reportBox.innerHTML = '<h3><span>E-Mail-Berichte</span><button class="x" type="button" aria-label="Schließen">✕</button></h3>' +
+      reports.map(function (r, i) { return '<section class="rep' + (i === 0 ? ' latest' : '') + '"><h4>' + esc(reportWhen(r)) + (i === 0 ? ' · neuester' : '') + '</h4>' + reportHtml(r) + '</section>'; }).join('');
+  }
+  /* Vorschau schwebt fest am Knopf, damit der Modulrahmen sie nicht abschneidet */
+  $('mailReportBtn').onmouseenter = $('mailReportBtn').onfocus = function () {
+    var r = this.getBoundingClientRect(), tip = $('mailReportTip');
+    var shell = this.closest('.shell'), z = shell ? parseFloat(getComputedStyle(shell).zoom) || 1 : 1; /* Schriftgröße-Regler zoomt */
+    tip.style.left = Math.max(8, Math.min(r.left, window.innerWidth - 396)) / z + 'px';
+    tip.style.top = (r.bottom + 6) / z + 'px';
+  };
+  $('mailReportBtn').onclick = function () { if (reportBox.showModal) reportBox.showModal(); else reportBox.setAttribute('open', ''); reportBox.scrollTop = 0; };
+  reportBox.onclick = function (ev) { /* Schließen per ✕ oder Tipp neben das Fenster */
+    var r = reportBox.getBoundingClientRect();
+    var outside = ev.clientX < r.left || ev.clientX > r.right || ev.clientY < r.top || ev.clientY > r.bottom;
+    if (outside || ev.target.closest('.x')) { if (reportBox.close) reportBox.close(); else reportBox.removeAttribute('open'); }
+  };
   var s = D.einsortiert || [];
   $('sorted').innerHTML = s.length ? '<span>Einsortiert</span>' + s.map(function (x) { return '<span>' + esc(x) + '</span>'; }).join('') : '';
   $('sorted').hidden = !s.length;
@@ -1050,7 +1117,7 @@ window.tagesblickInit = function () {
             var jobs = pend.slice();
             return token().then(function (tok) {
               return ladeErl(tok).then(function (remote) {
-                jobs.forEach(function (j) { if (j.on) remote[j.key] = 1; else delete remote[j.key]; });
+                jobs.forEach(function (j) { if (j.on) remote[j.key] = j.on; else delete remote[j.key]; });
                 prune(remote);
                 return fetch(url('erledigt.json'), { method: 'PUT', headers: { Authorization: 'Bearer ' + tok, 'Content-Type': 'application/json' }, body: JSON.stringify(remote) });
               });
@@ -1095,7 +1162,7 @@ window.tagesblickInit = function () {
     return {
       map: m,
       set: function (key, on) {
-        if (on) m[key] = 1; else delete m[key];
+        if (on) m[key] = on; else delete m[key];
         ls(LOCALERL, JSON.stringify(m));
         if (onSet) onSet(key, on);
       }
