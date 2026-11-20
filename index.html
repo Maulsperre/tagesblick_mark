@@ -294,6 +294,14 @@ html.handy .shop-cat { font-size: .8em; margin-top: 18px; }
 .zr-tools { display: flex; gap: 6px; margin-top: 5px; }
 .zr-tools .btn { padding: 3px 9px; font-size: .78em; opacity: .8; }
 .zr-tools .btn:hover { opacity: 1; }
+.zr-files { display: flex; flex-wrap: wrap; gap: 8px; }
+.zr-files:empty { display: none; }
+.zr-file { position: relative; width: 64px; height: 64px; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; display: grid; place-items: center; font-size: .72em; color: var(--muted); background: var(--panel, transparent); text-align: center; }
+.zr-file img { width: 100%; height: 100%; object-fit: cover; }
+.zr-file button { position: absolute; top: 2px; right: 2px; width: 20px; height: 20px; border: 0; border-radius: 50%; background: rgba(0,0,0,.65); color: #fff; cursor: pointer; font-size: 11px; line-height: 20px; padding: 0; }
+.zr-att { display: inline-block; margin-top: 3px; font-size: .82em; color: var(--accent); }
+html.handy .zr-file { width: 84px; height: 84px; }
+html.handy .zr-file button { width: 28px; height: 28px; line-height: 28px; font-size: 14px; }
 .zr-editbox { display: grid; gap: 6px; margin-top: 4px; }
 .zr-editbox textarea { width: 100%; box-sizing: border-box; padding: 7px 8px; border: 1px solid var(--accent); border-radius: 8px; background: var(--panel, transparent); color: var(--ink); font: inherit; resize: vertical; }
 .mail-report-bar { margin-bottom: 10px; position: relative; }
@@ -308,6 +316,13 @@ html.handy .shop-cat { font-size: .8em; margin-top: 18px; }
 .mail-report .rep.latest h4 { color: var(--accent); }
 .mail-report { width: min(460px, calc(100vw - 32px)); max-height: calc(100vh - 64px); overflow-y: auto; overflow-x: hidden; box-sizing: border-box; padding: 16px 18px; border: 1px solid var(--accent); border-radius: 12px; background: var(--bg); color: var(--ink); box-shadow: 0 18px 60px rgba(0,0,0,.45), 0 0 30px var(--glow); font-family: var(--body); }
 .mail-report::backdrop { background: rgba(0,0,0,.55); }
+.folge-btn[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 10px var(--glow); }
+.folge-ask p { margin: 0 0 8px; }
+.folge-ask .folge-what { padding: 8px 10px; border-left: 2px solid var(--accent); margin-bottom: 10px; }
+.folge-ask-act { margin-top: 4px; }
+.folge-pop .rep .why { margin: 4px 0 6px; }
+.folge-pop .rep .zr-act { margin-top: 6px; }
+.folge-pop .rep .tag { font-size: .75em; color: var(--muted); }
 .mail-report h3 { margin: 0 0 8px; font-family: var(--display); font-size: 1.05em; color: var(--accent); display: flex; justify-content: space-between; align-items: center; gap: 10px; }
 .mail-report .x { border: 1px solid var(--line); border-radius: 50%; width: 28px; height: 28px; flex: none; background: transparent; color: var(--muted); cursor: pointer; }
 .mail-report p { margin: 0; color: var(--muted); }
@@ -607,14 +622,17 @@ html[data-theme="ueberraschung"] .editbtn:hover, html[data-theme="ueberraschung"
       <section class="mod" data-id="zuruf" data-title="Zuruf an Claude" data-note-id="zrCount"><div class="mbody">
         <form class="zr" id="zrForm" autocomplete="off">
           <div class="zr-bezug" id="zrBezug" hidden></div>
-          <textarea id="zrText" rows="3" placeholder="Schreib einfach, was ich tun soll, zum Beispiel: Pauline hat am 5.12. um 15 Uhr Zahnarzt." required></textarea>
+          <textarea id="zrText" rows="3" placeholder="Schreib einfach, was ich tun soll, zum Beispiel: Pauline hat am 5.12. um 15 Uhr Zahnarzt."></textarea>
+          <div class="zr-files" id="zrFiles"></div>
+          <input type="file" id="zrFile" accept="image/*,application/pdf" multiple hidden>
           <div class="zr-act">
             <button class="btn zr-send" type="submit" id="zrSend">Senden</button>
             <button class="btn zr-mic" type="button" id="zrMic" hidden aria-pressed="false" title="Diktieren">🎤 Diktieren</button>
+            <button class="btn" type="button" id="zrFoto" title="Foto aufnehmen oder Bild/PDF anhängen">📷 Foto</button>
             <span class="mail-report-bar zr-helpwrap"><button class="btn" type="button" id="zrHelpBtn">Hilfe</button><span class="mail-report-tip" id="zrHelpTip" role="tooltip">
               <b>Schnellhilfe</b>
               <p>Schreib in ganzen Sätzen, was ich tun soll: Wer, was, wann. Ich hole Zurufe stündlich ab, trage sie ein und antworte hier darunter.</p>
-              <ul><li>„Pauline hat am 5.12. um 15 Uhr Zahnarzt.“</li><li>„Erinnere mich morgen um 8 an die Rücksendung.“</li><li>„Bei Jonas will ich mich melden.“</li></ul>
+              <ul><li>„Pauline hat am 5.12. um 15 Uhr Zahnarzt.“</li><li>„Erinnere mich morgen um 8 an die Rücksendung.“</li><li>„Bei Jonas will ich mich melden.“</li><li>📷 Foto von Rechnung oder Kalender, dazu „Bitte eintragen.“</li></ul>
               <p>Klick auf Hilfe für alle Funktionen von Tagesblick.</p>
             </span></span>
             <span class="zr-msg" id="zrMsg" role="status"></span>
@@ -627,6 +645,7 @@ html[data-theme="ueberraschung"] .editbtn:hover, html[data-theme="ueberraschung"
             <p>Schreib einfach, was du willst, wie in einer Nachricht an eine Sekretärin. Mit <b>🎤 Diktieren</b> sprichst du den Text ein, am PC und am Handy. Ein zweiter Klick auf <b>■ Stopp</b> beendet das Diktat. Beim ersten Mal fragt der Browser nach dem Mikrofon. Am PC geht außerdem überall Windows-Taste + H. Mit Senden geht der Zuruf in deinen OneDrive-Ordner (nachrichten.json). Ich hole ihn stündlich zwischen 8 und 21 Uhr ab, dazu bei den Läufen um 9 Uhr (am Wochenende 11 Uhr) und um 19 Uhr. Unter dem Zuruf steht dann der Status: <i>wartet auf Claude</i>, <i>erledigt</i> mit meiner Antwort oder <i>Rückfrage</i>.</p>
             <p>Ohne Netz bleibt der Zuruf als <i>noch nicht gesendet</i> auf dem Gerät und geht beim nächsten Öffnen raus.</p>
             <p>Solange ein Zuruf <i>wartet auf Claude</i> oder <i>noch nicht gesendet</i> ist, kannst du ihn mit <b>Bearbeiten</b> ändern oder mit <b>Löschen</b> zurücknehmen. Beispiel: Aus <q>Zahnarzt am 5.12.</q> wird <q>Zahnarzt am 6.12.</q>. Habe ich ihn schon bearbeitet, geht das nicht mehr. Dann schick einfach einen neuen Zuruf, zum Beispiel <q>Den Zahnarzt bitte auf den 6.12. verschieben.</q></p>
+            <p><b>📷 Foto:</b> Am Handy öffnet sich die Kamera oder die Galerie, am PC die Dateiauswahl. Du kannst mehrere Fotos oder PDFs anhängen, etwa alle Seiten einer Rechnung. Ein Text dazu ist freiwillig, hilft aber. Beispiele: Foto vom Wandkalender mit <q>Alle Termine von Pauline eintragen.</q>, Foto einer Rechnung mit <q>Bis wann muss ich das zahlen?</q> oder ein Elternbrief mit <q>Was muss ich tun?</q>. Ich lese das Bild und trage Termine und Aufgaben ein, zum Beispiel <q>Rechnung Stadtwerke 84,20 € bezahlen bis 5.12.</q>. Bezahlen werde ich nie selbst, und Kontonummern schreibe ich nicht in Tagesblick. Fotos werden verkleinert und landen nur in deinem OneDrive (Ordner zuruf_anhaenge), nie auf der öffentlichen Seite. Fotos senden geht nur mit Verbindung. Löschst du einen wartenden Zuruf, werden seine Fotos mitgelöscht.</p>
           </section>
 
           <section class="rep"><h4>Termin eintragen</h4>
@@ -673,6 +692,8 @@ html[data-theme="ueberraschung"] .editbtn:hover, html[data-theme="ueberraschung"
 
           <section class="rep"><h4>Posteingang und E-Mail-Berichte</h4>
             <p>Die E-Mail-Runde um 7 und 18 Uhr sortiert deine Mails. Was du tun musst, wird eine Aufgabe mit Link zur Mail. Mit der Maus über <b>E-Mail-Berichte</b> zeigt sich der letzte Bericht, ein Klick öffnet alle zum Scrollen. „Antwort-Auftrag kopieren“ gibt dir einen Text, mit dem Claude oder ChatGPT einen Antwortentwurf schreibt.</p>
+            <p><b>Antworten im Blick (★ Stern):</b> Gib einer wichtigen Mail in Gmail einen Stern, zum Beispiel deiner eigenen Mail an die Anwältin. Kommt darauf eine Antwort, meldet Tagesblick sie mit einem Pop-up und einer kurzen Zusammenfassung, dazu kommt eine Push-Nachricht. Mit <b>Gelesen</b> verschwindet die Meldung auf allen Geräten.</p>
+            <p><b>🔔 Nachverfolgung:</b> Für besonders wichtige Mails im Posteingang. Ein- und Ausschalten geht nur mit einer Bestätigung, damit nichts versehentlich passiert. Kommt eine Antwort, lege ich zusätzlich einen Kalendertermin an, der klingelt: <q>⏰ Wichtige E-Mail angekommen: Unterhalt</q>, mit der Zusammenfassung in der Beschreibung. Für Mails, die nicht im Posteingang von Tagesblick stehen, vergib in Gmail das Label <b>Nachverfolgung</b>, das wirkt genauso. Ich schaue stündlich zwischen 8 und 21 Uhr nach, nachts eingegangene Antworten melde ich um 8 Uhr.</p>
           </section>
 
           <section class="rep"><h4>Alarme und Rückblick</h4>
@@ -942,11 +963,13 @@ window.tagesblickInit = function () {
   var mail = D.post || [];
   $('mailCount').textContent = mail.length ? mail.length + ' wichtig' : '';
   $('mail').innerHTML = mail.length ? mail.map(function (m, i) {
-    return '<div class="row"><div class="from"><span>' + esc(m.von) + '</span>' + pill(m.pill) + '</div>' +
+    return '<div class="row"' + (m.gmail ? ' data-gmail="' + esc(m.gmail) + '"' : '') + '><div class="from"><span>' + esc(m.von) + '</span>' + pill(m.pill) + '</div>' +
       '<div class="title">' + titled(m, m.betreff) + '</div><div class="why">' + esc(m.text) + '</div>' +
       '<div class="actions">' + (linkOf(m) ? '<a class="btn" id="open-' + i + '" href="' + esc(linkOf(m)) + '" target="_blank" rel="noopener">In Gmail öffnen ↗</a>' : '') +
-      '<button class="btn" type="button" id="copy-' + i + '" data-copy="' + i + '">Antwort-Auftrag kopieren</button></div></div>';
+      '<button class="btn" type="button" id="copy-' + i + '" data-copy="' + i + '">Antwort-Auftrag kopieren</button>' +
+      (m.gmail ? '<button class="btn folge-btn" type="button" data-folge="' + i + '" aria-pressed="false">🔔 Nachverfolgung</button>' : '') + '</div></div>';
   }).join('') : '<p class="empty">Nichts Wichtiges im Posteingang.</p>';
+  window.TB_POST = mail;
   $('mail').addEventListener('click', function (ev) {
     var b = ev.target.closest('[data-copy]'); if (!b) return;
     var m = mail[Number(b.dataset.copy)];
@@ -1133,6 +1156,20 @@ window.tagesblickInit = function () {
     <span class="why">Claude sortiert neue Artikel ein und prüft, ob es sie bei Lidl gibt. Sonst sagt er dir, ob Aldi oder Netto sie haben.</span>
   </div>
 </dialog>
+<dialog class="mail-report folge-ask" id="folgeAsk" aria-label="Nachverfolgung bestätigen">
+  <h3><span id="folgeAskT">Nachverfolgung einschalten?</span><button class="x" type="button" aria-label="Schließen">✕</button></h3>
+  <div id="folgeAskBody"></div>
+  <div class="zr-act folge-ask-act">
+    <button class="btn zr-send" type="button" id="folgeYes">Ja, einschalten</button>
+    <button class="btn" type="button" id="folgeNo">Abbrechen</button>
+  </div>
+  <p class="zr-msg" id="folgeMsg" role="status"></p>
+</dialog>
+<dialog class="mail-report folge-pop" id="folgePop" aria-label="Antwort auf wichtige E-Mail">
+  <h3><span id="folgePopT">📬 Antwort auf eine wichtige E-Mail</span><button class="x" type="button" aria-label="Schließen">✕</button></h3>
+  <div id="folgePopList"></div>
+  <div class="zr-act"><button class="btn zr-send" type="button" id="folgeAllRead">Alle gelesen</button></div>
+</dialog>
 <div class="settings" id="settings" hidden role="dialog" aria-label="Einstellungen">
   <h3>Einstellungen <button class="x" type="button" id="setClose" aria-label="Schließen">×</button></h3>
   <div class="sec"><span class="lab">Design</span><div class="themes" id="themes"></div></div>
@@ -1233,7 +1270,8 @@ window.tagesblickInit = function () {
     $('zrList').innerHTML = all.slice(0, 12).map(function (m) {
       var s = STATUS[m.status] || STATUS.offen;
       return '<li><div class="zr-meta"><span class="pill ' + s[0] + '">' + s[1] + '</span><span>' + esc(when(m.zeit)) + '</span></div>' +
-        '<p class="zr-t">' + esc(m.text) + '</p>' + (m.antwort ? '<p class="zr-a">' + esc(m.antwort) + '</p>' : '') +
+        '<p class="zr-t">' + esc(m.text) + '</p>' +
+        (m.anhaenge && m.anhaenge.length ? '<span class="zr-att">📷 ' + m.anhaenge.length + (m.anhaenge.length > 1 ? ' Anhänge' : ' Anhang') + '</span>' : '') + (m.antwort ? '<p class="zr-a">' + esc(m.antwort) + '</p>' : '') +
         (m.status === 'rueckfrage' ? '<button class="btn zr-reply" type="button" data-reply="' + esc(m.id) + '">Antworten</button>' : '') +
         (m.status === 'offen' || m.status === 'unterwegs' ? '<div class="zr-tools"><button class="btn" type="button" data-edit="' + esc(m.id) + '">Bearbeiten</button><button class="btn" type="button" data-del="' + esc(m.id) + '">Löschen</button></div>' : '') + '</li>';
     }).join('') || '<li class="empty">Noch keine Zurufe. Schreib oben, was ich eintragen oder erledigen soll.</li>';
@@ -1294,6 +1332,7 @@ window.tagesblickInit = function () {
     function change(id, text) {
       var pend = get(PEND, []), lokal = pend.some(function (m) { return m.id === id; });
       if (lokal) {
+        if (text === null && window.TB_ZR_IO && window.TB_ZR_IO.drop) window.TB_ZR_IO.drop((pend.filter(function (m) { return m.id === id; })[0] || {}).anhaenge);
         pend = text === null ? pend.filter(function (m) { return m.id !== id; }) : pend.map(function (m) { if (m.id === id) m.text = text; return m; });
         put(PEND, pend); render(); msg(text === null ? 'Gelöscht.' : 'Geändert.'); return;
       }
@@ -1328,14 +1367,68 @@ window.tagesblickInit = function () {
       $('zrBezug').hidden = false; $('zrText').focus();
     });
     $('zrBezug').addEventListener('click', function (ev) { if (ev.target.id === 'zrBezugX') { bezug = null; $('zrBezug').hidden = true; } });
+    /* Fotos und PDFs: Bilder werden auf höchstens 2000 Pixel verkleinert und vor dem Zuruf in OneDrive hochgeladen */
+    var files = [], sending = false;
+    function showFiles() {
+      $('zrFiles').innerHTML = files.map(function (f, i) {
+        return '<div class="zr-file">' + (f.thumb ? '<img src="' + f.thumb + '" alt="">' : '📄<br>PDF') + '<button type="button" data-rm="' + i + '" aria-label="Anhang entfernen">✕</button></div>';
+      }).join('');
+    }
+    function shrink(file) {
+      return new Promise(function (res) {
+        var u = URL.createObjectURL(file), img = new Image();
+        img.onload = function () {
+          var s = Math.min(1, 2000 / Math.max(img.naturalWidth, img.naturalHeight));
+          var c = document.createElement('canvas'); c.width = Math.round(img.naturalWidth * s); c.height = Math.round(img.naturalHeight * s);
+          c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+          c.toBlob(function (b) { URL.revokeObjectURL(u); res(b ? { blob: b, ext: 'jpg', thumb: URL.createObjectURL(b) } : null); }, 'image/jpeg', 0.85);
+        };
+        img.onerror = function () { URL.revokeObjectURL(u); res(null); };
+        img.src = u;
+      });
+    }
+    $('zrFoto').addEventListener('click', function () { $('zrFile').click(); });
+    $('zrFile').addEventListener('change', function () {
+      var list = Array.prototype.slice.call(this.files || []); this.value = '';
+      if (!list.length) return;
+      msg('Bereite vor …'); sending = true; $('zrSend').disabled = true;
+      Promise.all(list.map(function (f) {
+        if (f.type === 'application/pdf') return Promise.resolve(f.size > 20e6 ? 'gross' : { blob: f, ext: 'pdf', thumb: '' });
+        return shrink(f);
+      })).then(function (r) {
+        var bad = 0;
+        r.forEach(function (x) { if (x && x !== 'gross') files.push(x); else bad++; });
+        if (files.length > 10) { files = files.slice(0, 10); bad++; }
+        sending = false; $('zrSend').disabled = false;
+        showFiles(); msg(bad ? 'Nicht alles ließ sich anhängen (nur Bilder und PDFs bis 20 MB, höchstens 10).' : '');
+      });
+    });
+    $('zrFiles').addEventListener('click', function (ev) {
+      var b = ev.target.closest('[data-rm]'); if (!b) return;
+      var f = files.splice(+b.getAttribute('data-rm'), 1)[0]; if (f && f.thumb) URL.revokeObjectURL(f.thumb);
+      showFiles();
+    });
     $('zrForm').addEventListener('submit', function (ev) {
       ev.preventDefault();
-      var text = $('zrText').value.trim(); if (!text) return;
+      if (sending) return;
+      var text = $('zrText').value.trim(); if (!text && !files.length) return;
       var m = { id: 'z' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), zeit: new Date().toISOString(), text: text, status: 'offen' };
       if (bezug) m.bezug = bezug;
-      var pend = get(PEND, []); pend.push(m); put(PEND, pend);
-      $('zrText').value = ''; bezug = null; $('zrBezug').hidden = true;
-      render(); flush();
+      function fertig() {
+        var pend = get(PEND, []); pend.push(m); put(PEND, pend);
+        $('zrText').value = ''; bezug = null; $('zrBezug').hidden = true;
+        files.forEach(function (f) { if (f.thumb) URL.revokeObjectURL(f.thumb); }); files = []; showFiles();
+        render(); flush();
+      }
+      if (!files.length) { fertig(); return; }
+      var io = window.TB_ZR_IO;
+      if (!io || !io.upload) { msg('Fotos gehen nur aus der angemeldeten App (Handy oder die Seite im Netz).'); return; }
+      sending = true; $('zrSend').disabled = true; msg('Lade ' + files.length + (files.length > 1 ? ' Anhänge' : ' Anhang') + ' hoch …');
+      var namen = files.map(function (f, i) { return 'zuruf_anhaenge/' + m.id + '_' + (i + 1) + '.' + f.ext; });
+      Promise.all(files.map(function (f, i) { return io.upload(namen[i], f.blob); }))
+        .then(function () { m.anhaenge = namen; fertig(); })
+        .catch(function () { msg('Hochladen hat nicht geklappt. Die Fotos bleiben ausgewählt, bitte später noch einmal senden.'); })
+        .then(function () { sending = false; $('zrSend').disabled = false; });
     });
   }
   window.tbZuruf = function (D) {
@@ -1346,6 +1439,125 @@ window.tagesblickInit = function () {
     var io = window.TB_ZR_IO;
     if (io) io.load().then(function (list) { put(LIST, list); render(); flush(); }).catch(function () { flush(); });
     else flush();
+  };
+})();
+</script>
+<script>
+/* Nachverfolgung von E-Mails. Daten in nachverfolgung.json im OneDrive-Ordner:
+   verfolgt  = Mails, bei deren Antwort Claude einen klingelnden Kalendertermin anlegt (Ein- und Ausschalten nur mit Bestätigung).
+   meldungen = Antworten auf gesternte oder verfolgte Mails, die Claude gefunden hat. Ungelesene zeigt die App als Pop-up. */
+(function () {
+  var SEEN = 'tagesblick-folge-gesehen', state = { verfolgt: [], meldungen: [] }, bound = false, offen = null, weg = {};
+  function $(id) { return document.getElementById(id); }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function getL(k, d) { try { return JSON.parse(localStorage.getItem(k) || 'null') || d; } catch (e) { return d; } }
+  function putL(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  function io() { return window.TB_FOLGE_IO; }
+  function show(d) { if (d.showModal) { if (!d.open) d.showModal(); } else d.setAttribute('open', ''); }
+  function hide(d) { if (d.close) d.close(); else d.removeAttribute('open'); }
+  function norm(o) {
+    o = (o && typeof o === 'object') ? o : {};
+    if (!Array.isArray(o.verfolgt)) o.verfolgt = [];
+    if (!Array.isArray(o.meldungen)) o.meldungen = [];
+    return o;
+  }
+  function when(iso) {
+    var d = new Date(iso); if (isNaN(d)) return '';
+    return d.toLocaleDateString('de-DE', { weekday: 'short', day: 'numeric', month: 'numeric' }) + ', ' + d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+  }
+  function isOn(g) { return state.verfolgt.some(function (v) { return v.gmail === g; }); }
+  function paint() {
+    Array.prototype.forEach.call(document.querySelectorAll('#mail .row[data-gmail]'), function (row) {
+      var b = row.querySelector('.folge-btn'); if (!b) return;
+      var on = isOn(row.getAttribute('data-gmail'));
+      b.setAttribute('aria-pressed', String(on));
+      b.textContent = on ? '🔔 Nachverfolgung an' : '🔔 Nachverfolgung';
+      b.title = on ? 'Aktiv: Kommt eine Antwort, klingelt ein Kalendertermin. Klick zum Ausschalten.' : 'Bei einer Antwort einen klingelnden Kalendertermin mit Zusammenfassung bekommen';
+    });
+  }
+  function unseen() {
+    var lokal = getL(SEEN, {});
+    return state.meldungen.filter(function (m) { return m && m.id && !m.gesehen && !lokal[m.id]; });
+  }
+  /* Pop-up mit ungelesenen Antworten. Mit ✕ weggeklickt kommt es erst bei neuen Antworten oder beim nächsten Öffnen wieder. */
+  function pop(force) {
+    var list = unseen(), d = $('folgePop');
+    if (!list.length) { if (d.open) hide(d); return; }
+    if (!force && !d.open && list.every(function (m) { return weg[m.id]; })) return;
+    $('folgePopT').textContent = list.length > 1 ? '📬 ' + list.length + ' Antworten auf wichtige E-Mails' : '📬 Antwort auf eine wichtige E-Mail';
+    $('folgePopList').innerHTML = list.map(function (m) {
+      var g = m.gmail ? 'https://mail.google.com/mail/u/0/#all/' + encodeURIComponent(m.gmail) : '';
+      return '<section class="rep"><h4>' + esc(m.betreff || 'E-Mail') + '</h4>' +
+        '<div class="tag">' + esc(m.von || '') + (m.zeit ? ' · ' + esc(when(m.zeit)) : '') + (m.art === 'nachverfolgung' ? ' · 🔔 Nachverfolgung' : ' · ★ mit Stern') + '</div>' +
+        '<p class="why">' + esc(m.zusammenfassung || '') + '</p><div class="zr-act">' +
+        (g ? '<a class="btn" href="' + esc(g) + '" target="_blank" rel="noopener">In Gmail öffnen ↗</a>' : '') +
+        '<button class="btn" type="button" data-read="' + esc(m.id) + '">Gelesen</button></div></section>';
+    }).join('');
+    $('folgeAllRead').hidden = list.length < 2;
+    show(d);
+  }
+  function markRead(ids) {
+    var lokal = getL(SEEN, {}), now = new Date().toISOString();
+    ids.forEach(function (i) { lokal[i] = now; }); putL(SEEN, lokal);
+    pop(true);
+    if (io()) io().apply(function (o) {
+      o.meldungen.forEach(function (m) { if (m && ids.indexOf(m.id) >= 0 && !m.gesehen) m.gesehen = now; });
+    }).then(function (o) { state = norm(o); }).catch(function () {});
+  }
+  function load() {
+    var p = io() ? io().load() : fetch('nachverfolgung.json', { cache: 'no-store' }).then(function (r) { return r.ok ? r.json() : {}; });
+    return p.then(function (o) { state = norm(o); paint(); pop(); }).catch(function () {});
+  }
+  /* Bestätigung vor dem Ein- oder Ausschalten, damit nichts versehentlich passiert */
+  function ask(m) {
+    offen = m; var on = isOn(m.gmail);
+    $('folgeAskT').textContent = on ? 'Nachverfolgung ausschalten?' : 'Nachverfolgung einschalten?';
+    $('folgeAskBody').innerHTML = '<div class="folge-what"><b>' + esc(m.betreff) + '</b><br><span class="why">von ' + esc(m.von) + '</span></div>' + (on
+      ? '<p>Dann klingelt bei einer Antwort kein Kalendertermin mehr. Hat die Mail in Gmail einen Stern, zeigt Tagesblick die Antwort weiterhin an.</p>'
+      : '<p>Willst du das wirklich für <b>diese</b> E-Mail? Sobald eine Antwort eingeht, lege ich einen Kalendertermin an, der klingelt: „Wichtige E-Mail angekommen“, mit einer Zusammenfassung des Inhalts. Zusätzlich erscheint hier ein Pop-up.</p><p class="why">Ich schaue stündlich zwischen 8 und 21 Uhr nach.</p>');
+    $('folgeYes').textContent = on ? 'Ja, ausschalten' : 'Ja, einschalten';
+    $('folgeYes').disabled = false; $('folgeMsg').textContent = '';
+    show($('folgeAsk')); $('folgeNo').focus();
+  }
+  function outside(d, ev) {
+    var r = d.getBoundingClientRect();
+    return ev.clientX < r.left || ev.clientX > r.right || ev.clientY < r.top || ev.clientY > r.bottom;
+  }
+  function bind() {
+    bound = true;
+    document.addEventListener('click', function (ev) {
+      var b = ev.target.closest('#mail [data-folge]'); if (!b) return;
+      var m = (window.TB_POST || [])[Number(b.getAttribute('data-folge'))]; if (m && m.gmail) ask(m);
+    });
+    var a = $('folgeAsk');
+    a.addEventListener('click', function (ev) { if (outside(a, ev) || ev.target.closest('.x')) hide(a); });
+    $('folgeNo').addEventListener('click', function () { hide(a); });
+    $('folgeYes').addEventListener('click', function () {
+      var m = offen; if (!m) return;
+      if (!io()) { $('folgeMsg').textContent = 'Das geht nur aus der angemeldeten App (Handy oder die Seite im Netz).'; return; }
+      var on = isOn(m.gmail);
+      $('folgeYes').disabled = true; $('folgeMsg').textContent = 'Speichere …';
+      io().apply(function (o) {
+        o.verfolgt = o.verfolgt.filter(function (v) { return v.gmail !== m.gmail; });
+        if (!on) o.verfolgt.push({ gmail: m.gmail, betreff: m.betreff, von: m.von, seit: new Date().toISOString() });
+      }).then(function (o) { state = norm(o); paint(); hide(a); })
+        .catch(function () { $('folgeYes').disabled = false; $('folgeMsg').textContent = 'OneDrive nicht erreichbar. Bitte später noch einmal versuchen.'; });
+    });
+    var p = $('folgePop');
+    p.addEventListener('click', function (ev) {
+      var r = ev.target.closest('[data-read]');
+      if (r) { markRead([r.getAttribute('data-read')]); return; }
+      if (outside(p, ev) || ev.target.closest('.x')) { unseen().forEach(function (m) { weg[m.id] = 1; }); hide(p); }
+    });
+    p.addEventListener('cancel', function () { unseen().forEach(function (m) { weg[m.id] = 1; }); });
+    $('folgeAllRead').addEventListener('click', function () { markRead(unseen().map(function (m) { return m.id; })); });
+    setInterval(load, 10 * 60 * 1000);
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) load(); });
+  }
+  window.tbFolge = function () {
+    if (!$('folgePop')) return;
+    if (!bound) bind();
+    paint(); load();
   };
 })();
 </script>
@@ -1465,7 +1677,7 @@ window.tagesblickInit = function () {
     if (btn) { var b = document.createElement('button'); b.type = 'button'; b.className = 'btn'; b.textContent = btn; b.style.marginLeft = '10px'; b.onclick = fn; n.appendChild(b); }
   }
   function parse(text) { return JSON.parse(text.slice(text.indexOf('{'), text.lastIndexOf('}') + 1)); }
-  function start(d, msg, btn, fn) { window.TAGESBLICK = d; window.tagesblickInit(); note(msg || '', btn, fn); if (window.tbZuruf) window.tbZuruf(d); if (window.tbShop) window.tbShop(); }
+  function start(d, msg, btn, fn) { window.TAGESBLICK = d; window.tagesblickInit(); note(msg || '', btn, fn); if (window.tbZuruf) window.tbZuruf(d); if (window.tbShop) window.tbShop(); if (window.tbFolge) window.tbFolge(); }
   function cached() { try { var c = ls(CACHE); return c && JSON.parse(c); } catch (e) { return null; } }
   function localMap() { try { return JSON.parse(ls(LOCALERL) || '{}') || {}; } catch (e) { return {}; } }
   function fallback(msg, btn, fn) { var d = cached(); start(d || EMPTY, d ? msg + ' Gezeigt wird der zuletzt gespeicherte Stand.' : msg, btn, fn); }
@@ -1569,7 +1781,7 @@ window.tagesblickInit = function () {
                 var i = -1; o.nachrichten.forEach(function (m, k) { if (m.id === id) i = k; });
                 if (i < 0) throw new Error('weg');
                 if (o.nachrichten[i].status !== 'offen') throw new Error('bearbeitet');
-                if (text === null) o.nachrichten.splice(i, 1);
+                if (text === null) { window.TB_ZR_IO.drop(o.nachrichten[i].anhaenge); o.nachrichten.splice(i, 1); }
                 else { o.nachrichten[i].text = text; o.nachrichten[i].geaendert = new Date().toISOString(); }
                 return fetch(url('nachrichten.json'), { method: 'PUT', headers: { Authorization: 'Bearer ' + tok, 'Content-Type': 'application/json' }, body: JSON.stringify(o, null, 1) })
                   .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return o.nachrichten; });
@@ -1578,6 +1790,22 @@ window.tagesblickInit = function () {
           });
           zrLauf = p.catch(function () {});
           return p;
+        },
+        /* Foto oder PDF zu einem Zuruf in den Unterordner zuruf_anhaenge hochladen */
+        upload: function (name, blob) {
+          return token().then(function (tok) {
+            return fetch(url(name), { method: 'PUT', headers: { Authorization: 'Bearer ' + tok, 'Content-Type': blob.type || 'application/octet-stream' }, body: blob });
+          }).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); });
+        },
+        /* Anhänge eines gelöschten Zurufs entfernen (Fehler werden ignoriert) */
+        drop: function (namen) {
+          if (!namen || !namen.length) return;
+          token().then(function (tok) {
+            namen.forEach(function (n) {
+              if (!/^zuruf_anhaenge\/[\w.-]+$/.test(n)) return;
+              fetch('https://graph.microsoft.com/v1.0/me/drive/root:/' + ordner + n, { method: 'DELETE', headers: { Authorization: 'Bearer ' + tok } }).catch(function () {});
+            });
+          }).catch(function () {});
         }
       };
       /* Einkaufsliste: einkauf.json. Die App wendet ihre Änderungen immer auf den frisch gelesenen Stand an. */
@@ -1600,6 +1828,34 @@ window.tagesblickInit = function () {
             });
           });
           shopLauf = p.catch(function () {});
+          return p;
+        }
+      };
+      /* Nachverfolgung: nachverfolgung.json (verfolgte Mails und gefundene Antworten) */
+      var folgeLauf = Promise.resolve();
+      function ladeFolge(tok) {
+        return fetch(url('nachverfolgung.json'), { headers: { Authorization: 'Bearer ' + tok }, cache: 'no-store' })
+          .then(function (r) { if (r.status === 404) return {}; if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+          .then(function (o) {
+            o = (o && typeof o === 'object') ? o : {};
+            if (!Array.isArray(o.verfolgt)) o.verfolgt = [];
+            if (!Array.isArray(o.meldungen)) o.meldungen = [];
+            return o;
+          });
+      }
+      window.TB_FOLGE_IO = {
+        load: function () { return token().then(ladeFolge); },
+        apply: function (fn) {
+          var p = folgeLauf.then(function () {
+            return token().then(function (tok) {
+              return ladeFolge(tok).then(function (o) {
+                fn(o);
+                return fetch(url('nachverfolgung.json'), { method: 'PUT', headers: { Authorization: 'Bearer ' + tok, 'Content-Type': 'application/json' }, body: JSON.stringify(o, null, 1) })
+                  .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return o; });
+              });
+            });
+          });
+          folgeLauf = p.catch(function () {});
           return p;
         }
       };
