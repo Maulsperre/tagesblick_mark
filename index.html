@@ -243,6 +243,11 @@ input[type="checkbox"]:checked::after { content: ""; width: 10px; height: 5px; b
 .zr-list .zr-t { margin: 3px 0 0; white-space: pre-wrap; }
 .zr-list .zr-a { margin: 4px 0 0; padding-left: 8px; border-left: 2px solid var(--accent); color: var(--muted); font-size: .9em; white-space: pre-wrap; }
 .zr-list .zr-reply { margin-top: 5px; }
+.zr-tools { display: flex; gap: 6px; margin-top: 5px; }
+.zr-tools .btn { padding: 3px 9px; font-size: .78em; opacity: .8; }
+.zr-tools .btn:hover { opacity: 1; }
+.zr-editbox { display: grid; gap: 6px; margin-top: 4px; }
+.zr-editbox textarea { width: 100%; box-sizing: border-box; padding: 7px 8px; border: 1px solid var(--accent); border-radius: 8px; background: var(--panel, transparent); color: var(--ink); font: inherit; resize: vertical; }
 .mail-report-bar { margin-bottom: 10px; position: relative; }
 .mail-report-tip { display: none; position: fixed; left: 16px; top: 16px; z-index: 25; width: min(380px, calc(100vw - 48px)); padding: 10px 12px; border: 1px solid var(--accent); border-radius: 10px; background: var(--bg); color: var(--ink); box-shadow: 0 12px 40px rgba(0,0,0,.45); font-size: .9em; pointer-events: none; }
 .mail-report-tip b { display: block; margin-bottom: 4px; color: var(--accent); font-family: var(--display); }
@@ -571,6 +576,7 @@ html[data-theme="ueberraschung"] .editbtn:hover, html[data-theme="ueberraschung"
           <section class="rep"><h4>Zuruf an Claude</h4>
             <p>Schreib einfach, was du willst, wie in einer Nachricht an eine Sekretärin. Mit <b>🎤 Diktieren</b> sprichst du den Text ein, am PC und am Handy. Ein zweiter Klick auf <b>■ Stopp</b> beendet das Diktat. Beim ersten Mal fragt der Browser nach dem Mikrofon. Am PC geht außerdem überall Windows-Taste + H. Mit Senden geht der Zuruf in deinen OneDrive-Ordner (nachrichten.json). Ich hole ihn stündlich zwischen 8 und 21 Uhr ab, dazu bei den Läufen um 9 Uhr (am Wochenende 11 Uhr) und um 19 Uhr. Unter dem Zuruf steht dann der Status: <i>wartet auf Claude</i>, <i>erledigt</i> mit meiner Antwort oder <i>Rückfrage</i>.</p>
             <p>Ohne Netz bleibt der Zuruf als <i>noch nicht gesendet</i> auf dem Gerät und geht beim nächsten Öffnen raus.</p>
+            <p>Solange ein Zuruf <i>wartet auf Claude</i> oder <i>noch nicht gesendet</i> ist, kannst du ihn mit <b>Bearbeiten</b> ändern oder mit <b>Löschen</b> zurücknehmen. Beispiel: Aus <q>Zahnarzt am 5.12.</q> wird <q>Zahnarzt am 6.12.</q>. Habe ich ihn schon bearbeitet, geht das nicht mehr. Dann schick einfach einen neuen Zuruf, zum Beispiel <q>Den Zahnarzt bitte auf den 6.12. verschieben.</q></p>
           </section>
 
           <section class="rep"><h4>Termin eintragen</h4>
@@ -1156,7 +1162,8 @@ window.tagesblickInit = function () {
       var s = STATUS[m.status] || STATUS.offen;
       return '<li><div class="zr-meta"><span class="pill ' + s[0] + '">' + s[1] + '</span><span>' + esc(when(m.zeit)) + '</span></div>' +
         '<p class="zr-t">' + esc(m.text) + '</p>' + (m.antwort ? '<p class="zr-a">' + esc(m.antwort) + '</p>' : '') +
-        (m.status === 'rueckfrage' ? '<button class="btn zr-reply" type="button" data-reply="' + esc(m.id) + '">Antworten</button>' : '') + '</li>';
+        (m.status === 'rueckfrage' ? '<button class="btn zr-reply" type="button" data-reply="' + esc(m.id) + '">Antworten</button>' : '') +
+        (m.status === 'offen' || m.status === 'unterwegs' ? '<div class="zr-tools"><button class="btn" type="button" data-edit="' + esc(m.id) + '">Bearbeiten</button><button class="btn" type="button" data-del="' + esc(m.id) + '">Löschen</button></div>' : '') + '</li>';
     }).join('') || '<li class="empty">Noch keine Zurufe. Schreib oben, was ich eintragen oder erledigen soll.</li>';
   }
   function flush() {
@@ -1211,7 +1218,37 @@ window.tagesblickInit = function () {
       var outside = ev.clientX < r.left || ev.clientX > r.right || ev.clientY < r.top || ev.clientY > r.bottom;
       if (outside || ev.target.closest('.x')) { if (guide.close) guide.close(); else guide.removeAttribute('open'); }
     });
+    /* Wartende Zurufe bearbeiten oder löschen: noch nicht gesendete nur auf dem Gerät, gesendete in OneDrive */
+    function change(id, text) {
+      var pend = get(PEND, []), lokal = pend.some(function (m) { return m.id === id; });
+      if (lokal) {
+        pend = text === null ? pend.filter(function (m) { return m.id !== id; }) : pend.map(function (m) { if (m.id === id) m.text = text; return m; });
+        put(PEND, pend); render(); msg(text === null ? 'Gelöscht.' : 'Geändert.'); return;
+      }
+      var io = window.TB_ZR_IO;
+      if (!io || !io.modify) { msg('Ändern geht nur mit Verbindung zu OneDrive.'); return; }
+      msg('Speichere …');
+      io.modify(id, text).then(function (list) { put(LIST, list); render(); msg(text === null ? 'Gelöscht.' : 'Geändert.'); })
+        .catch(function (e) {
+          var t = e && e.message;
+          if (t === 'bearbeitet' || t === 'weg') { msg('Claude hat diesen Zuruf gerade schon bearbeitet. Schick bei Bedarf einen neuen.'); io.load().then(function (l) { put(LIST, l); render(); }); }
+          else msg('OneDrive nicht erreichbar. Bitte später noch einmal versuchen.');
+        });
+    }
     $('zrList').addEventListener('click', function (ev) {
+      var d = ev.target.closest('[data-del]');
+      if (d) { if (window.confirm('Diesen Zuruf löschen?')) change(d.getAttribute('data-del'), null); return; }
+      var e = ev.target.closest('[data-edit]');
+      if (e) {
+        var li = e.closest('li'), p = li.querySelector('.zr-t'), id = e.getAttribute('data-edit');
+        li.querySelector('.zr-tools').hidden = true;
+        var box = document.createElement('div'); box.className = 'zr-editbox';
+        box.innerHTML = '<textarea rows="3"></textarea><div class="zr-act"><button class="btn zr-send" type="button" data-save>Speichern</button><button class="btn" type="button" data-cancel>Abbrechen</button></div>';
+        box.querySelector('textarea').value = p.textContent; p.replaceWith(box); box.querySelector('textarea').focus();
+        box.querySelector('[data-cancel]').onclick = render;
+        box.querySelector('[data-save]').onclick = function () { var t = box.querySelector('textarea').value.trim(); if (t) change(id, t); };
+        return;
+      }
       var b = ev.target.closest('[data-reply]'); if (!b) return;
       var m = get(LIST, []).filter(function (x) { return x.id === b.getAttribute('data-reply'); })[0]; if (!m) return;
       bezug = m.id;
@@ -1346,6 +1383,24 @@ window.tagesblickInit = function () {
               return ladeZr(tok).then(function (o) {
                 var ids = {}; o.nachrichten.forEach(function (m) { ids[m.id] = 1; });
                 neu.forEach(function (m) { if (!ids[m.id]) o.nachrichten.push(m); });
+                return fetch(url('nachrichten.json'), { method: 'PUT', headers: { Authorization: 'Bearer ' + tok, 'Content-Type': 'application/json' }, body: JSON.stringify(o, null, 1) })
+                  .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return o.nachrichten; });
+              });
+            });
+          });
+          zrLauf = p.catch(function () {});
+          return p;
+        },
+        /* Wartenden Zuruf ändern (text) oder löschen (text === null). Nur solange Claude ihn noch nicht bearbeitet hat. */
+        modify: function (id, text) {
+          var p = zrLauf.then(function () {
+            return token().then(function (tok) {
+              return ladeZr(tok).then(function (o) {
+                var i = -1; o.nachrichten.forEach(function (m, k) { if (m.id === id) i = k; });
+                if (i < 0) throw new Error('weg');
+                if (o.nachrichten[i].status !== 'offen') throw new Error('bearbeitet');
+                if (text === null) o.nachrichten.splice(i, 1);
+                else { o.nachrichten[i].text = text; o.nachrichten[i].geaendert = new Date().toISOString(); }
                 return fetch(url('nachrichten.json'), { method: 'PUT', headers: { Authorization: 'Bearer ' + tok, 'Content-Type': 'application/json' }, body: JSON.stringify(o, null, 1) })
                   .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return o.nachrichten; });
               });
