@@ -223,6 +223,54 @@ input[type="checkbox"]:checked::after { content: ""; width: 10px; height: 5px; b
 .row .from { font-size: 13px; color: var(--muted); display: flex; justify-content: space-between; gap: 6px 10px; flex-wrap: wrap; align-items: center; }
 .zr { display: grid; gap: 8px; }
 .zr-act .zr-helpwrap { margin: 0; display: inline-flex; }
+/* Einkaufsliste (Popup) */
+.shop { width: min(520px, calc(100vw - 24px)); }
+.shop h3 small { font-family: var(--mono); font-size: .7em; color: var(--muted); margin-left: 8px; font-weight: 400; }
+.shop-add { display: flex; gap: 8px; margin-bottom: 4px; }
+.shop-add input { flex: 1; min-width: 0; padding: 9px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel, transparent); color: var(--ink); font: inherit; }
+.shop-add input:focus { outline: none; border-color: var(--accent); }
+.shop-msg { margin: 0 0 4px; min-height: 1em; font-size: .82em; color: var(--muted); }
+.shop-cat { margin: 12px 0 4px; font-family: var(--mono); font-size: .72em; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+.shop-ul { list-style: none; margin: 0; padding: 0; }
+.shop-item { display: flex; align-items: flex-start; gap: 6px; border-top: 1px solid var(--line); }
+.shop-item label { flex: 1; display: flex; align-items: flex-start; gap: 10px; padding: 8px 0; cursor: pointer; min-width: 0; }
+.shop-item input { margin-top: 1px; }
+.shop-txt { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; min-width: 0; }
+.shop-txt small { flex-basis: 100%; color: var(--muted); }
+.shop-menge { color: var(--muted); }
+.shop-item.done .shop-txt b { text-decoration: line-through; opacity: .55; }
+.shop-item.warn small { color: var(--ink); }
+.shop-del { border: 0; background: transparent; color: var(--muted); cursor: pointer; padding: 8px 6px; font: inherit; opacity: .6; }
+.shop-del:hover { opacity: 1; color: var(--accent); }
+.shop-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--line); }
+.shop-foot .why { font-size: .8em; }
+
+/* Handy-Modus: eine Spalte, größere Schrift, große Flächen zum Antippen */
+html.handy body { font-size: 17px; }
+html.handy .shell { zoom: max(var(--z), 1); }
+html.handy .mods { grid-template-columns: minmax(0, 1fr) !important; }
+html.handy .mod.w2 { grid-column: auto !important; }
+html.handy .item { padding: 12px 0; grid-template-columns: 52px minmax(0, 1fr) auto; }
+html.handy .item .title { font-size: 1.08em; }
+html.handy input[type="checkbox"] { width: 30px; height: 30px; border-width: 2px; border-radius: 6px; }
+html.handy input[type="checkbox"]:checked::after { width: 14px; height: 7px; border-width: 3px; }
+html.handy .btn { min-height: 40px; padding: 8px 14px; }
+html.handy .chip.link { padding: 9px 12px; font-size: 13px; }
+html.handy .tool { width: 38px; height: 38px; }
+html.handy .mail-report { width: 100vw; max-width: 100vw; height: 100dvh; max-height: 100dvh; margin: 0; border-radius: 0; border-width: 0; padding: 16px 16px calc(16px + env(safe-area-inset-bottom, 0px)); font-size: 17px; }
+html.handy .mail-report .x { width: 40px; height: 40px; font-size: 18px; }
+html.handy .shop-item label { padding: 14px 0; gap: 14px; font-size: 1.1em; }
+html.handy .shop-del { padding: 14px 10px; font-size: 1.1em; }
+html.handy .shop-add input { padding: 12px; font-size: 1.05em; }
+html.handy .shop-cat { font-size: .8em; margin-top: 18px; }
+@media (min-width: 1200px) and (min-height: 560px) {
+  html.handy, html.handy body { height: auto; overflow: auto; }
+  html.handy .shell { height: auto; }
+  html.handy .mods { grid-template-rows: none; grid-auto-rows: auto; }
+  html.handy .mod { display: block; }
+  html.handy .mbody { overflow: visible; }
+  html.handy .mods { max-width: 720px; margin: 0 auto; width: 100%; }
+}
 .zr-mic.on { border-color: var(--akut, #e5484d); color: var(--akut, #e5484d); animation: zrPulse 1.2s ease-in-out infinite; }
 @keyframes zrPulse { 50% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--akut, #e5484d) 30%, transparent); } }
 @media (hover: hover) { #zrHelpBtn:hover + .mail-report-tip, #zrHelpBtn:focus-visible + .mail-report-tip { display: block; } }
@@ -520,6 +568,8 @@ html[data-theme="ueberraschung"] .editbtn:hover, html[data-theme="ueberraschung"
         <span class="chip" id="next" hidden></span>
         <a class="chip link" id="lGmail" href="https://mail.google.com/" target="_blank" rel="noopener">Gmail ↗</a>
         <a class="chip link" id="lKal" href="https://calendar.google.com/" target="_blank" rel="noopener">Kalender ↗</a>
+        <button class="chip link shopbtn" type="button" id="shopBtn">🛒 Einkauf</button>
+        <button class="chip link" type="button" id="handyBtn" aria-pressed="false">📱 Handy</button>
         <button class="chip link" type="button" id="fsBtn" hidden>Vollbild</button>
         <button class="chip link setbtn" type="button" id="setBtn" aria-expanded="false">Design</button>
         <button class="chip link setsrc" type="button" id="srcBtn">Datenquelle</button>
@@ -606,6 +656,15 @@ html[data-theme="ueberraschung"] .editbtn:hover, html[data-theme="ueberraschung"
 
           <section class="rep"><h4>Rückfragen beantworten</h4>
             <p>Fehlt mir etwas, steht unter deinem Zuruf eine <i>Rückfrage</i>, zum Beispiel <q>Um wie viel Uhr?</q>. Tipp auf <b>Antworten</b>, schreib <q>15 Uhr</q> und sende. Ich verbinde beides.</p>
+          </section>
+
+          <section class="rep"><h4>Einkaufsliste</h4>
+            <p>Oben auf <b>🛒 Einkauf</b> tippen. Es öffnet sich die Liste als Fenster. Oben schreibst du, was du brauchst: <q>3 Paar Socken</q> und dann <b>Dazu</b>. Das geht auch per Zuruf: <q>Milch und Socken auf die Einkaufsliste.</q></p>
+            <p>Ich sortiere neue Artikel ein (Socken zu Kleidung, Milch zum Kühlregal) und prüfe, ob Lidl sie führt. Gibt es etwas bei Lidl nicht, steht dort rot <i>Nicht bei Lidl</i> mit dem Hinweis, ob Aldi oder Netto es haben. Im Laden tippst du auf einen Artikel, er wandert nach <i>Im Wagen</i>. Am nächsten Tag ist er weg. Mit ✕ löschst du einen Artikel.</p>
+          </section>
+
+          <section class="rep"><h4>Handy-Modus</h4>
+            <p><b>📱 Handy</b> schaltet auf eine Spalte mit größerer Schrift und großen Kästchen zum Abhaken mit dem Finger. Fenster wie die Einkaufsliste füllen dann den ganzen Bildschirm. <b>🖥 Normal</b> schaltet zurück. Auf dem Handy ist der Modus beim ersten Start schon an.</p>
           </section>
 
           <section class="rep"><h4>Erledigt abhaken</h4>
@@ -1061,6 +1120,19 @@ window.tagesblickInit = function () {
 };
 </script>
 
+<dialog class="mail-report shop" id="shop" aria-label="Einkaufsliste">
+  <h3><span>Einkaufsliste <small id="shopCount"></small></span><button class="x" type="button" aria-label="Schließen">✕</button></h3>
+  <form class="shop-add" id="shopAdd" autocomplete="off">
+    <input id="shopIn" type="text" placeholder="Was brauchst du? z. B. 2 Paar Socken, Milch" enterkeyhint="done">
+    <button class="btn zr-send" type="submit">Dazu</button>
+  </form>
+  <p class="shop-msg" id="shopMsg" role="status"></p>
+  <div id="shopList"></div>
+  <div class="shop-foot">
+    <button class="btn" type="button" id="shopClear" hidden>Gekaufte entfernen</button>
+    <span class="why">Claude sortiert neue Artikel ein und prüft, ob es sie bei Lidl gibt. Sonst sagt er dir, ob Aldi oder Netto sie haben.</span>
+  </div>
+</dialog>
 <div class="settings" id="settings" hidden role="dialog" aria-label="Einstellungen">
   <h3>Einstellungen <button class="x" type="button" id="setClose" aria-label="Schließen">×</button></h3>
   <div class="sec"><span class="lab">Design</span><div class="themes" id="themes"></div></div>
@@ -1278,6 +1350,104 @@ window.tagesblickInit = function () {
 })();
 </script>
 <script>
+/* Handy-Modus: größere Schrift und Fingertip-Flächen. Auf Touch-Handys beim ersten Start an, sonst per Knopf. */
+(function () {
+  var K = 'tagesblick-handy', b = document.getElementById('handyBtn'), on;
+  try { on = localStorage.getItem(K); } catch (e) {}
+  on = on === null || on === undefined ? !!(window.matchMedia && matchMedia('(pointer: coarse) and (max-width: 820px)').matches) : on === '1';
+  function set(v) { on = v; document.documentElement.classList.toggle('handy', v); b.setAttribute('aria-pressed', String(v)); b.textContent = v ? '🖥 Normal' : '📱 Handy'; try { localStorage.setItem(K, v ? '1' : '0'); } catch (e) {} }
+  set(on);
+  b.addEventListener('click', function () { set(!on); });
+})();
+</script>
+<script>
+/* Einkaufsliste: einkauf.json im OneDrive-Ordner. Die App fügt hinzu, hakt ab und löscht.
+   Claude sortiert neue Artikel in Kategorien, prüft das Lidl-Sortiment und nennt sonst Aldi oder Netto (siehe ERINNERUNGEN.md). */
+(function () {
+  var OPS = 'tagesblick-einkauf-ops', CACHE = 'tagesblick-einkauf';
+  var ORDER = ['Obst & Gemüse', 'Brot & Backwaren', 'Kühlregal', 'Fleisch & Fisch', 'Tiefkühl', 'Vorrat', 'Süßes & Snacks', 'Getränke', 'Drogerie', 'Haushalt', 'Kleidung', 'Schule & Büro', 'Sonstiges'];
+  var dlg = document.getElementById('shop'), bound = false;
+  function $(id) { return document.getElementById(id); }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function get(k, d) { try { return JSON.parse(localStorage.getItem(k) || 'null') || d; } catch (e) { return d; } }
+  function put(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  function msg(t) { $('shopMsg').textContent = t || ''; }
+  function heute() { var d = new Date(); if (d.getHours() < 5) d.setDate(d.getDate() - 1); var p = function (n) { return String(n).padStart(2, '0'); }; return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()); }
+  function applyOps(o, ops) {
+    ops.forEach(function (op) {
+      var i = -1; o.artikel.forEach(function (a, k) { if (a.id === op.id) i = k; });
+      if (op.op === 'add' && i < 0) o.artikel.push(op.item);
+      if (op.op === 'set' && i >= 0) { if (op.gekauft) o.artikel[i].gekauft = op.gekauft; else delete o.artikel[i].gekauft; }
+      if (op.op === 'del' && i >= 0) o.artikel.splice(i, 1);
+      if (op.op === 'clear') o.artikel = o.artikel.filter(function (a) { return !a.gekauft; });
+    });
+    return o;
+  }
+  function state() { var o = JSON.parse(JSON.stringify(get(CACHE, { artikel: [] }))); if (!Array.isArray(o.artikel)) o.artikel = []; return applyOps(o, get(OPS, [])); }
+  function render() {
+    var o = state(), h = heute();
+    var vis = o.artikel.filter(function (a) { return !a.gekauft || a.gekauft >= h; });
+    var offen = vis.filter(function (a) { return !a.gekauft; }), wagen = vis.filter(function (a) { return a.gekauft; });
+    $('shopBtn').textContent = '🛒 Einkauf' + (offen.length ? ' · ' + offen.length : '');
+    $('shopCount').textContent = offen.length ? offen.length + ' offen' : '';
+    $('shopClear').hidden = !o.artikel.some(function (a) { return a.gekauft; });
+    var groups = {};
+    offen.forEach(function (a) { var g = a.neu ? 'Neu – Claude sortiert gleich ein' : (a.kategorie || 'Sonstiges'); (groups[g] = groups[g] || []).push(a); });
+    function rank(g) { if (g.indexOf('Neu') === 0) return -1; var i = ORDER.indexOf(g); return i < 0 ? 98 : i; }
+    var names = Object.keys(groups).sort(function (x, y) { return rank(x) - rank(y) || x.localeCompare(y); });
+    function row(a) {
+      var warn = a.lidl === false;
+      return '<li class="shop-item' + (a.gekauft ? ' done' : '') + (warn ? ' warn' : '') + '"><label><input type="checkbox" data-id="' + esc(a.id) + '"' + (a.gekauft ? ' checked' : '') + '>' +
+        '<span class="shop-txt"><b>' + esc(a.name) + '</b>' + (a.menge ? ' <span class="shop-menge">' + esc(a.menge) + '</span>' : '') +
+        (warn ? '<span class="pill akut">Nicht bei Lidl' + (a.laden && a.laden !== 'Lidl' ? ' · ' + esc(a.laden) : '') + '</span>' : a.laden && a.laden !== 'Lidl' ? '<span class="pill bald">' + esc(a.laden) + '</span>' : '') +
+        (a.hinweis ? '<small>' + esc(a.hinweis) + '</small>' : '') + '</span></label>' +
+        '<button class="shop-del" type="button" data-del="' + esc(a.id) + '" aria-label="' + esc(a.name) + ' löschen">✕</button></li>';
+    }
+    $('shopList').innerHTML = (names.map(function (g) { return '<h4 class="shop-cat">' + esc(g) + '</h4><ul class="shop-ul">' + groups[g].map(row).join('') + '</ul>'; }).join('') ||
+      '<p class="empty">Die Liste ist leer. Schreib oben, was du brauchst, oder schick Claude einen Zuruf wie „Socken auf die Einkaufsliste“.</p>') +
+      (wagen.length ? '<h4 class="shop-cat">Im Wagen</h4><ul class="shop-ul">' + wagen.map(row).join('') + '</ul>' : '');
+  }
+  function op(o) { var ops = get(OPS, []); ops.push(o); put(OPS, ops); render(); flush(); }
+  function flush() {
+    var io = window.TB_SHOP_IO, ops = get(OPS, []);
+    if (!ops.length) return;
+    if (!io) { msg('Auf diesem Gerät gespeichert. Gesendet wird aus der angemeldeten App.'); return; }
+    io.apply(function (o) { applyOps(o, ops); }).then(function (o) {
+      put(OPS, get(OPS, []).slice(ops.length)); put(CACHE, o); render(); msg('');
+    }).catch(function () { msg('OneDrive nicht erreichbar. Deine Änderungen bleiben auf dem Gerät und werden später gesendet.'); });
+  }
+  function reload() {
+    var io = window.TB_SHOP_IO;
+    var p = io ? io.load() : fetch('einkauf.json?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { if (!r.ok) throw 0; return r.json(); });
+    return p.then(function (o) { if (o && Array.isArray(o.artikel)) put(CACHE, o); render(); flush(); }).catch(function () { render(); flush(); });
+  }
+  function bind() {
+    bound = true;
+    $('shopBtn').addEventListener('click', function () { if (dlg.showModal) dlg.showModal(); else dlg.setAttribute('open', ''); reload(); });
+    dlg.addEventListener('click', function (ev) {
+      var r = dlg.getBoundingClientRect();
+      var outside = ev.clientX < r.left || ev.clientX > r.right || ev.clientY < r.top || ev.clientY > r.bottom;
+      if ((outside && ev.clientX + ev.clientY > 0) || ev.target.closest('.x')) { if (dlg.close) dlg.close(); else dlg.removeAttribute('open'); return; }
+      var d = ev.target.closest('[data-del]'); if (d) op({ op: 'del', id: d.getAttribute('data-del') });
+    });
+    $('shopList').addEventListener('change', function (ev) {
+      var c = ev.target; if (!c.matches('input[type="checkbox"]')) return;
+      op({ op: 'set', id: c.getAttribute('data-id'), gekauft: c.checked ? heute() : null });
+    });
+    $('shopAdd').addEventListener('submit', function (ev) {
+      ev.preventDefault();
+      var t = $('shopIn').value.trim(); if (!t) return;
+      $('shopIn').value = '';
+      var id = 'a' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+      op({ op: 'add', id: id, item: { id: id, name: t, neu: true, zeit: new Date().toISOString() } });
+    });
+    $('shopClear').addEventListener('click', function () { if (window.confirm('Alle gekauften Artikel von der Liste entfernen?')) op({ op: 'clear' }); });
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) reload(); });
+  }
+  window.tbShop = function () { if (!dlg) return; if (!bound) bind(); reload(); };
+})();
+</script>
+<script>
 /* Datenquelle: Auf Handy und Tablet meldet sich die Seite bei Microsoft an und liest daten.js aus dem eigenen OneDrive.
    Abgehakte Einträge werden in erledigt.json im selben Ordner gespeichert, damit alle Geräte denselben Stand zeigen.
    Die Client-ID (keine Geheimzahl) und die Anmeldung stehen nur auf dem jeweiligen Gerät (localStorage), nie in dieser Datei. */
@@ -1295,7 +1465,7 @@ window.tagesblickInit = function () {
     if (btn) { var b = document.createElement('button'); b.type = 'button'; b.className = 'btn'; b.textContent = btn; b.style.marginLeft = '10px'; b.onclick = fn; n.appendChild(b); }
   }
   function parse(text) { return JSON.parse(text.slice(text.indexOf('{'), text.lastIndexOf('}') + 1)); }
-  function start(d, msg, btn, fn) { window.TAGESBLICK = d; window.tagesblickInit(); note(msg || '', btn, fn); if (window.tbZuruf) window.tbZuruf(d); }
+  function start(d, msg, btn, fn) { window.TAGESBLICK = d; window.tagesblickInit(); note(msg || '', btn, fn); if (window.tbZuruf) window.tbZuruf(d); if (window.tbShop) window.tbShop(); }
   function cached() { try { var c = ls(CACHE); return c && JSON.parse(c); } catch (e) { return null; } }
   function localMap() { try { return JSON.parse(ls(LOCALERL) || '{}') || {}; } catch (e) { return {}; } }
   function fallback(msg, btn, fn) { var d = cached(); start(d || EMPTY, d ? msg + ' Gezeigt wird der zuletzt gespeicherte Stand.' : msg, btn, fn); }
@@ -1407,6 +1577,29 @@ window.tagesblickInit = function () {
             });
           });
           zrLauf = p.catch(function () {});
+          return p;
+        }
+      };
+      /* Einkaufsliste: einkauf.json. Die App wendet ihre Änderungen immer auf den frisch gelesenen Stand an. */
+      var shopLauf = Promise.resolve();
+      function ladeShop(tok) {
+        return fetch(url('einkauf.json'), { headers: { Authorization: 'Bearer ' + tok }, cache: 'no-store' })
+          .then(function (r) { if (r.status === 404) return { artikel: [] }; if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+          .then(function (o) { if (!o || !Array.isArray(o.artikel)) o = { artikel: [] }; return o; });
+      }
+      window.TB_SHOP_IO = {
+        load: function () { return token().then(ladeShop); },
+        apply: function (fn) {
+          var p = shopLauf.then(function () {
+            return token().then(function (tok) {
+              return ladeShop(tok).then(function (o) {
+                fn(o);
+                return fetch(url('einkauf.json'), { method: 'PUT', headers: { Authorization: 'Bearer ' + tok, 'Content-Type': 'application/json' }, body: JSON.stringify(o, null, 1) })
+                  .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return o; });
+              });
+            });
+          });
+          shopLauf = p.catch(function () {});
           return p;
         }
       };
