@@ -221,6 +221,28 @@ input[type="checkbox"]:checked::after { content: ""; width: 10px; height: 5px; b
 .row:first-child { border-top: 0; padding-top: 0; }
 .row:last-child { padding-bottom: 0; }
 .row .from { font-size: 13px; color: var(--muted); display: flex; justify-content: space-between; gap: 6px 10px; flex-wrap: wrap; align-items: center; }
+.zr { display: grid; gap: 8px; }
+.zr-arten { display: flex; flex-wrap: wrap; gap: 6px; }
+.zr-arten button { padding: 5px 10px; border: 1px solid var(--line); border-radius: 999px; background: transparent; color: var(--muted); font: inherit; font-size: .88em; cursor: pointer; }
+.zr-arten button.on { border-color: var(--accent); color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); }
+.zr-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.zr-row label { display: grid; gap: 3px; flex: 1 1 110px; font-size: .8em; color: var(--muted); }
+.zr select, .zr input, .zr textarea { width: 100%; box-sizing: border-box; padding: 7px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--panel, transparent); color: var(--ink); font: inherit; color-scheme: dark; }
+.zr select option { color: #111; background: #fff; }
+.zr textarea { resize: vertical; min-height: 64px; }
+.zr select:focus, .zr input:focus, .zr textarea:focus { outline: none; border-color: var(--accent); }
+.zr-act { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.zr-send { border-color: var(--accent); color: var(--accent); }
+.zr-msg { font-size: .85em; color: var(--muted); }
+.zr-bezug { font-size: .85em; color: var(--muted); border-left: 2px solid var(--accent); padding-left: 8px; }
+.zr-bezug button { margin-left: 6px; border: 0; background: transparent; color: var(--accent); cursor: pointer; font: inherit; }
+.zr-help { margin-top: 10px; }
+.zr-list { list-style: none; margin: 12px 0 0; padding: 0; display: grid; gap: 8px; }
+.zr-list li { padding: 8px 0 0; border-top: 1px solid var(--line); }
+.zr-list .zr-meta { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: .78em; color: var(--muted); }
+.zr-list .zr-t { margin: 3px 0 0; white-space: pre-wrap; }
+.zr-list .zr-a { margin: 4px 0 0; padding-left: 8px; border-left: 2px solid var(--accent); color: var(--muted); font-size: .9em; white-space: pre-wrap; }
+.zr-list .zr-reply { margin-top: 5px; }
 .mail-report-bar { margin-bottom: 10px; position: relative; }
 .mail-report-tip { display: none; position: fixed; left: 16px; top: 16px; z-index: 25; width: min(380px, calc(100vw - 48px)); padding: 10px 12px; border: 1px solid var(--accent); border-radius: 10px; background: var(--bg); color: var(--ink); box-shadow: 0 12px 40px rgba(0,0,0,.45); font-size: .9em; pointer-events: none; }
 .mail-report-tip b { display: block; margin-bottom: 4px; color: var(--accent); font-family: var(--display); }
@@ -527,13 +549,35 @@ html[data-theme="ueberraschung"] .editbtn:hover, html[data-theme="ueberraschung"
       <section class="mod" data-id="kommend" data-title="Rückt näher" data-note-id="aheadCount"><div class="mbody"><ul class="items" id="ahead"></ul></div></section>
       <section class="mod w2" data-id="post" data-title="Posteingang" data-note-id="mailCount"><div class="mbody"><div class="mail-report-bar" id="mailReportBar" hidden><button class="btn" type="button" id="mailReportBtn">E-Mail-Berichte</button><div class="mail-report-tip" id="mailReportTip" role="tooltip"></div></div><dialog id="mailReport" class="mail-report" aria-label="E-Mail-Mini-Bericht"></dialog><div id="mail"></div><div class="sorted" id="sorted"></div></div></section>
       <section class="mod" data-id="melden" data-title="Mal wieder melden" data-note-id="peopleCount"><div class="mbody"><div id="people"></div></div></section>
-      <section class="mod" data-id="zuruf" data-title="So kommen Einträge rein"><div class="mbody">
-        <ul class="said">
-          <li><q>Dienstags hat Luise Probleme mit Ethik.</q><span class="then">Sag das Claude oder ChatGPT. Die App ergänzt daten.js, du lädst die Seite neu.</span></li>
-          <li><q>Von Jonas habe ich lange nichts mehr gehört.</q><span class="then">Kommt unter „Mal wieder melden“.</span></li>
-          <li><q>Erinnere mich früh an den Kliniktermin.</q><span class="then">Eintrag mit Vorlauf und Liste der Unterlagen.</span></li>
-        </ul>
-        <p class="why">Die Regeln für die KI stehen in <b>ANLEITUNG.md</b>.</p>
+      <section class="mod" data-id="zuruf" data-title="Zuruf an Claude" data-note-id="zrCount"><div class="mbody">
+        <form class="zr" id="zrForm" autocomplete="off">
+          <div class="zr-arten" id="zrArt" role="radiogroup" aria-label="Art">
+            <button type="button" data-art="Termin">Termin</button><button type="button" data-art="Aufgabe">Aufgabe</button><button type="button" data-art="Erinnern">Erinnern</button><button type="button" data-art="Melden">Melden</button><button type="button" data-art="Notiz" class="on">Sonstiges</button>
+          </div>
+          <div class="zr-row">
+            <label>Für<select id="zrWer"></select></label>
+            <label>Datum<input type="date" id="zrDatum"></label>
+            <label>Uhrzeit<input type="time" id="zrZeit"></label>
+          </div>
+          <div class="zr-bezug" id="zrBezug" hidden></div>
+          <textarea id="zrText" rows="3" placeholder="Was soll ich eintragen oder erledigen? Am Handy geht auch das Mikrofon der Tastatur." required></textarea>
+          <div class="zr-act">
+            <button class="btn zr-send" type="submit" id="zrSend">Senden</button>
+            <button class="btn" type="button" id="zrHelpBtn" aria-expanded="false">Hilfe</button>
+            <span class="zr-msg" id="zrMsg" role="status"></span>
+          </div>
+        </form>
+        <div class="zr-help" id="zrHelp" hidden>
+          <p class="why">Claude holt die Zurufe ab: werktags um 9 Uhr, am Wochenende und an Feiertagen um 11 Uhr und jeden Abend um 19 Uhr. Er trägt sie in Tagesblick ein, legt Alarme an und schreibt dir hier die Antwort. Wenn etwas fehlt, steht hier eine Rückfrage, die du mit „Antworten“ beantwortest.</p>
+          <ul class="said">
+            <li><q>Pauline hat am 5.12. um 15 Uhr Zahnarzt.</q><span class="then">Art Termin, Für Pauline, Datum und Uhrzeit. Daraus wird ein Termin mit Vorlauf und Unterlagen.</span></li>
+            <li><q>Steuerberater Kieser anrufen.</q><span class="then">Art Aufgabe. Kommt unter Heute zum Abhaken, die Priorität steigt mit der Zeit.</span></li>
+            <li><q>Morgen um 8 an die Rücksendung erinnern.</q><span class="then">Art Erinnern. Daraus wird ein Alarm in deinem Kalender.</span></li>
+            <li><q>Von Jonas habe ich lange nichts gehört.</q><span class="then">Art Melden. Kommt unter „Mal wieder melden“.</span></li>
+          </ul>
+          <p class="why">Mails an andere Menschen schickt Claude nie von selbst, dafür kommt eine Rückfrage. Die Regeln für die KI stehen in <b>ANLEITUNG.md</b>.</p>
+        </div>
+        <ul class="zr-list" id="zrList"></ul>
       </div></section>
     </div>
 
@@ -1039,6 +1083,91 @@ window.tagesblickInit = function () {
 })();
 </script>
 <script>
+/* Zuruf an Claude: Nachrichten aus der App landen in nachrichten.json im OneDrive-Ordner.
+   Claude holt sie bei seinen geplanten Läufen ab (siehe ERINNERUNGEN.md) und schreibt Status und Antwort zurück.
+   Ohne Verbindung bleiben sie auf dem Gerät und werden beim nächsten Start gesendet. */
+(function () {
+  var PEND = 'tagesblick-zuruf-offen', LIST = 'tagesblick-zuruf-liste';
+  var art = 'Notiz', bezug = null, bound = false, P = {};
+  function $(id) { return document.getElementById(id); }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function get(k, d) { try { return JSON.parse(localStorage.getItem(k) || 'null') || d; } catch (e) { return d; } }
+  function put(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  function msg(t) { $('zrMsg').textContent = t || ''; }
+  function when(iso) {
+    var d = new Date(iso); if (isNaN(d)) return '';
+    return d.toLocaleDateString('de-DE', { weekday: 'short', day: 'numeric', month: 'numeric' }) + ', ' + d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+  }
+  var STATUS = { offen: ['info', 'wartet auf Claude'], unterwegs: ['bald', 'noch nicht gesendet'], erledigt: ['ruhig', 'erledigt'], rueckfrage: ['akut', 'Rückfrage'] };
+  function render() {
+    var remote = get(LIST, []), pend = get(PEND, []);
+    var ids = {}; remote.forEach(function (m) { ids[m.id] = 1; });
+    var all = remote.concat(pend.filter(function (m) { return !ids[m.id]; }).map(function (m) { var c = Object.assign({}, m); c.status = 'unterwegs'; return c; }));
+    all.sort(function (a, b) { return String(b.zeit).localeCompare(String(a.zeit)); });
+    var offen = all.filter(function (m) { return m.status !== 'erledigt'; }).length;
+    var rf = all.filter(function (m) { return m.status === 'rueckfrage'; }).length;
+    if ($('zrCount')) $('zrCount').textContent = rf ? rf + ' Rückfrage' + (rf > 1 ? 'n' : '') : offen ? offen + ' offen' : '';
+    $('zrList').innerHTML = all.slice(0, 12).map(function (m) {
+      var s = STATUS[m.status] || STATUS.offen, who = P[m.wer] ? P[m.wer].name : '';
+      var extra = [m.art && m.art !== 'Notiz' ? m.art : '', who, m.datum ? m.datum.split('-').reverse().slice(0, 2).join('.') + '.' : '', m.uhrzeit || ''].filter(Boolean).join(' · ');
+      return '<li><div class="zr-meta"><span class="pill ' + s[0] + '">' + s[1] + '</span><span>' + esc(when(m.zeit)) + '</span>' + (extra ? '<span>' + esc(extra) + '</span>' : '') + '</div>' +
+        '<p class="zr-t">' + esc(m.text) + '</p>' + (m.antwort ? '<p class="zr-a">' + esc(m.antwort) + '</p>' : '') +
+        (m.status === 'rueckfrage' ? '<button class="btn zr-reply" type="button" data-reply="' + esc(m.id) + '">Antworten</button>' : '') + '</li>';
+    }).join('') || '<li class="empty">Noch keine Zurufe. Schreib oben, was ich eintragen oder erledigen soll.</li>';
+  }
+  function flush() {
+    var io = window.TB_ZR_IO, pend = get(PEND, []);
+    if (!io) { if (pend.length) msg('Auf diesem Gerät gespeichert. Gesendet wird aus der angemeldeten App (Handy, Tablet oder die Seite im Netz).'); return; }
+    if (!pend.length) return;
+    msg('Sende …');
+    io.push(pend).then(function (list) {
+      var sent = {}; pend.forEach(function (m) { sent[m.id] = 1; });
+      put(PEND, get(PEND, []).filter(function (m) { return !sent[m.id]; }));
+      put(LIST, list); render(); msg('Gesendet. Claude holt es beim nächsten Lauf ab.');
+    }).catch(function () { msg('OneDrive nicht erreichbar. Der Zuruf bleibt auf dem Gerät und wird später gesendet.'); });
+  }
+  function bind() {
+    bound = true;
+    $('zrArt').addEventListener('click', function (ev) {
+      var b = ev.target.closest('button[data-art]'); if (!b) return;
+      art = b.getAttribute('data-art');
+      [].forEach.call($('zrArt').children, function (x) { x.classList.toggle('on', x === b); });
+    });
+    $('zrHelpBtn').addEventListener('click', function () { var h = $('zrHelp'); h.hidden = !h.hidden; this.setAttribute('aria-expanded', String(!h.hidden)); });
+    $('zrList').addEventListener('click', function (ev) {
+      var b = ev.target.closest('[data-reply]'); if (!b) return;
+      var m = get(LIST, []).filter(function (x) { return x.id === b.getAttribute('data-reply'); })[0]; if (!m) return;
+      bezug = m.id;
+      $('zrBezug').innerHTML = 'Antwort auf: „' + esc(m.antwort || m.text) + '“<button type="button" id="zrBezugX" aria-label="Bezug entfernen">✕</button>';
+      $('zrBezug').hidden = false; $('zrText').focus();
+    });
+    $('zrBezug').addEventListener('click', function (ev) { if (ev.target.id === 'zrBezugX') { bezug = null; $('zrBezug').hidden = true; } });
+    $('zrForm').addEventListener('submit', function (ev) {
+      ev.preventDefault();
+      var text = $('zrText').value.trim(); if (!text) return;
+      var m = { id: 'z' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), zeit: new Date().toISOString(), art: art, wer: $('zrWer').value,
+        datum: $('zrDatum').value || '', uhrzeit: $('zrZeit').value || '', text: text, status: 'offen' };
+      if (bezug) m.bezug = bezug;
+      var pend = get(PEND, []); pend.push(m); put(PEND, pend);
+      $('zrText').value = ''; $('zrDatum').value = ''; $('zrZeit').value = ''; bezug = null; $('zrBezug').hidden = true;
+      art = 'Notiz'; [].forEach.call($('zrArt').children, function (x) { x.classList.toggle('on', x.getAttribute('data-art') === 'Notiz'); });
+      render(); flush();
+    });
+  }
+  window.tbZuruf = function (D) {
+    if (!$('zrForm')) return;
+    P = (D && D.personen) || {};
+    var sel = $('zrWer'), keys = Object.keys(P);
+    sel.innerHTML = (keys.length ? keys : ['ich']).map(function (k) { return '<option value="' + esc(k) + '"' + (k === 'ich' ? ' selected' : '') + '>' + esc(P[k] ? P[k].name : k) + '</option>'; }).join('');
+    if (!bound) bind();
+    render();
+    var io = window.TB_ZR_IO;
+    if (io) io.load().then(function (list) { put(LIST, list); render(); flush(); }).catch(function () { flush(); });
+    else flush();
+  };
+})();
+</script>
+<script>
 /* Datenquelle: Auf Handy und Tablet meldet sich die Seite bei Microsoft an und liest daten.js aus dem eigenen OneDrive.
    Abgehakte Einträge werden in erledigt.json im selben Ordner gespeichert, damit alle Geräte denselben Stand zeigen.
    Die Client-ID (keine Geheimzahl) und die Anmeldung stehen nur auf dem jeweiligen Gerät (localStorage), nie in dieser Datei. */
@@ -1056,7 +1185,7 @@ window.tagesblickInit = function () {
     if (btn) { var b = document.createElement('button'); b.type = 'button'; b.className = 'btn'; b.textContent = btn; b.style.marginLeft = '10px'; b.onclick = fn; n.appendChild(b); }
   }
   function parse(text) { return JSON.parse(text.slice(text.indexOf('{'), text.lastIndexOf('}') + 1)); }
-  function start(d, msg, btn, fn) { window.TAGESBLICK = d; window.tagesblickInit(); note(msg || '', btn, fn); }
+  function start(d, msg, btn, fn) { window.TAGESBLICK = d; window.tagesblickInit(); note(msg || '', btn, fn); if (window.tbZuruf) window.tbZuruf(d); }
   function cached() { try { var c = ls(CACHE); return c && JSON.parse(c); } catch (e) { return null; } }
   function localMap() { try { return JSON.parse(ls(LOCALERL) || '{}') || {}; } catch (e) { return {}; } }
   function fallback(msg, btn, fn) { var d = cached(); start(d || EMPTY, d ? msg + ' Gezeigt wird der zuletzt gespeicherte Stand.' : msg, btn, fn); }
@@ -1128,6 +1257,30 @@ window.tagesblickInit = function () {
           }).catch(function () { note('Der Haken ist nur auf diesem Gerät gespeichert, OneDrive war nicht erreichbar. Beim nächsten Haken wird es erneut versucht.'); });
         }
         return mkErl(map, function (key, on) { pend.push({ key: key, on: on }); push(); }, map);
+      };
+      /* Zurufe: nachrichten.json lesen und neue Nachrichten anhängen (Claude ändert nur Status und Antwort). */
+      function ladeZr(tok) {
+        return fetch(url('nachrichten.json'), { headers: { Authorization: 'Bearer ' + tok }, cache: 'no-store' })
+          .then(function (r) { if (r.status === 404) return { nachrichten: [] }; if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+          .then(function (o) { if (!o || !Array.isArray(o.nachrichten)) o = { nachrichten: [] }; return o; });
+      }
+      var zrLauf = Promise.resolve();
+      window.TB_ZR_IO = {
+        load: function () { return token().then(ladeZr).then(function (o) { return o.nachrichten; }); },
+        push: function (neu) {
+          var p = zrLauf.then(function () {
+            return token().then(function (tok) {
+              return ladeZr(tok).then(function (o) {
+                var ids = {}; o.nachrichten.forEach(function (m) { ids[m.id] = 1; });
+                neu.forEach(function (m) { if (!ids[m.id]) o.nachrichten.push(m); });
+                return fetch(url('nachrichten.json'), { method: 'PUT', headers: { Authorization: 'Bearer ' + tok, 'Content-Type': 'application/json' }, body: JSON.stringify(o, null, 1) })
+                  .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return o.nachrichten; });
+              });
+            });
+          });
+          zrLauf = p.catch(function () {});
+          return p;
+        }
       };
       app.initialize().then(function () { return app.handleRedirectPromise(); }).then(function (res) {
         account = (res && res.account) || app.getAllAccounts()[0];
