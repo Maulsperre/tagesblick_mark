@@ -316,6 +316,15 @@ html.handy .zr-file button { width: 28px; height: 28px; line-height: 28px; font-
 .mail-report .rep.latest h4 { color: var(--accent); }
 .mail-report { width: min(460px, calc(100vw - 32px)); max-height: calc(100vh - 64px); overflow-y: auto; overflow-x: hidden; box-sizing: border-box; padding: 16px 18px; border: 1px solid var(--accent); border-radius: 12px; background: var(--bg); color: var(--ink); box-shadow: 0 18px 60px rgba(0,0,0,.45), 0 0 30px var(--glow); font-family: var(--body); }
 .mail-report::backdrop { background: rgba(0,0,0,.55); }
+.ideen-item { border-top: 1px solid var(--line); padding: 10px 0; display: grid; gap: 4px; }
+.ideen-head { display: flex; align-items: flex-start; gap: 6px; }
+.ideen-head b { flex: 1; min-width: 0; }
+.ideen-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.ideen-item p { margin: 0; font-size: .92em; }
+.ideen-item .loesung { color: var(--muted); font-size: .88em; }
+.ideen-item .wart { color: var(--muted); font-size: .85em; font-style: italic; }
+.ideen-item.fertig b { opacity: .6; }
+html.handy .ideen-item { padding: 14px 0; }
 .folge-btn[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); box-shadow: 0 0 10px var(--glow); }
 .folge-ask p { margin: 0 0 8px; }
 .folge-ask .folge-what { padding: 8px 10px; border-left: 2px solid var(--accent); margin-bottom: 10px; }
@@ -584,6 +593,7 @@ html[data-theme="ueberraschung"] .editbtn:hover, html[data-theme="ueberraschung"
         <a class="chip link" id="lGmail" href="https://mail.google.com/" target="_blank" rel="noopener">Gmail ↗</a>
         <a class="chip link" id="lKal" href="https://calendar.google.com/" target="_blank" rel="noopener">Kalender ↗</a>
         <button class="chip link shopbtn" type="button" id="shopBtn">🛒 Einkauf</button>
+        <button class="chip link shopbtn" type="button" id="ideenBtn">💡 Ideen</button>
         <button class="chip link" type="button" id="handyBtn" aria-pressed="false">📱 Handy</button>
         <button class="chip link" type="button" id="fsBtn" hidden>Vollbild</button>
         <button class="chip link setbtn" type="button" id="setBtn" aria-expanded="false">Design</button>
@@ -640,6 +650,9 @@ html[data-theme="ueberraschung"] .editbtn:hover, html[data-theme="ueberraschung"
         </form>
         <dialog class="mail-report zr-guide" id="zrGuide" aria-label="Hilfe zu Tagesblick">
           <h3><span>Hilfe zu Tagesblick</span><button class="x" type="button" aria-label="Schließen">✕</button></h3>
+
+          <section class="rep"><h4>💡 Ideensammlung</h4>
+            <p>Der Knopf <b>💡 Ideen</b> oben öffnet deine Liste mit Ideen, was Tagesblick können soll. Schreib die Idee ins Feld und tippe auf <b>Dazu</b>, oder schick einen Zuruf, der mit <q>Idee:</q> beginnt, zum Beispiel <q>Idee: Das Wetter im Radar anzeigen.</q> Claude bewertet jede Idee bei seinem nächsten Lauf mit wenigen Sätzen: ob sie <i>machbar</i> ist, wie groß der <i>Aufwand</i> ist, ob sie <i>Kosten</i> verursacht, und nennt die einfachste kostenlose Lösung. Gebaut wird eine Idee erst, wenn du es sagst, zum Beispiel <q>Bau die Wetter-Idee ein.</q> Mit ✕ löschst du eine Idee.</p></section>
 
           <section class="rep"><h4>Zuruf an Claude</h4>
             <p>Schreib einfach, was du willst, wie in einer Nachricht an eine Sekretärin. Mit <b>🎤 Diktieren</b> sprichst du den Text ein, am PC und am Handy. Ein zweiter Klick auf <b>■ Stopp</b> beendet das Diktat. Beim ersten Mal fragt der Browser nach dem Mikrofon. Am PC geht außerdem überall Windows-Taste + H. Mit Senden geht der Zuruf in deinen OneDrive-Ordner (nachrichten.json). Ich hole ihn stündlich zwischen 8 und 21 Uhr ab, dazu bei den Läufen um 9 Uhr (am Wochenende 11 Uhr) und um 19 Uhr. Unter dem Zuruf steht dann der Status: <i>wartet auf Claude</i>, <i>erledigt</i> mit meiner Antwort oder <i>Rückfrage</i>.</p>
@@ -1156,6 +1169,18 @@ window.tagesblickInit = function () {
     <span class="why">Claude sortiert neue Artikel ein und prüft, ob es sie bei Lidl gibt. Sonst sagt er dir, ob Aldi oder Netto sie haben.</span>
   </div>
 </dialog>
+<dialog class="mail-report shop ideen" id="ideen" aria-label="Ideensammlung">
+  <h3><span>Ideensammlung <small id="ideenCount"></small></span><button class="x" type="button" aria-label="Schließen">✕</button></h3>
+  <form class="shop-add" id="ideenAdd" autocomplete="off">
+    <input id="ideenIn" type="text" placeholder="Neue Idee, z. B. Wetter im Radar anzeigen" enterkeyhint="done">
+    <button class="btn zr-send" type="submit">Dazu</button>
+  </form>
+  <p class="shop-msg" id="ideenMsg" role="status"></p>
+  <div id="ideenList"></div>
+  <div class="shop-foot">
+    <span class="why">Claude bewertet jede Idee kurz: ob es geht, wie groß der Aufwand ist und was es kostet, und sucht dafür immer die kostenlose, einfache Lösung. Gebaut wird erst, wenn du es sagst. Du kannst Ideen auch per Zuruf schicken: „Idee: …“.</span>
+  </div>
+</dialog>
 <dialog class="mail-report folge-ask" id="folgeAsk" aria-label="Nachverfolgung bestätigen">
   <h3><span id="folgeAskT">Nachverfolgung einschalten?</span><button class="x" type="button" aria-label="Schließen">✕</button></h3>
   <div id="folgeAskBody"></div>
@@ -1443,6 +1468,91 @@ window.tagesblickInit = function () {
 })();
 </script>
 <script>
+/* Ideensammlung: ideen.json im OneDrive-Ordner. Die App fügt Ideen hinzu und löscht sie.
+   Claude bewertet neue Ideen (umsetzbar, kurz, aufwand, kosten, loesung) nach ERINNERUNGEN.md. Gebaut wird nur auf Anweisung. */
+(function () {
+  var OPS = 'tagesblick-ideen-ops', CACHE = 'tagesblick-ideen';
+  var dlg = document.getElementById('ideen'), bound = false;
+  function $(id) { return document.getElementById(id); }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function get(k, d) { try { return JSON.parse(localStorage.getItem(k) || 'null') || d; } catch (e) { return d; } }
+  function put(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  function msg(t) { $('ideenMsg').textContent = t || ''; }
+  function applyOps(o, ops) {
+    ops.forEach(function (op) {
+      var i = -1; o.ideen.forEach(function (a, k) { if (a.id === op.id) i = k; });
+      if (op.op === 'add' && i < 0) o.ideen.push(op.item);
+      if (op.op === 'del' && i >= 0) o.ideen.splice(i, 1);
+    });
+    return o;
+  }
+  function state() { var o = JSON.parse(JSON.stringify(get(CACHE, { ideen: [] }))); if (!Array.isArray(o.ideen)) o.ideen = []; return applyOps(o, get(OPS, [])); }
+  var UMS = { ja: ['ruhig', 'Machbar'], teilweise: ['bald', 'Teilweise machbar'], nein: ['akut', 'Nicht machbar'] };
+  var AUF = { klein: ['ruhig', 'Aufwand klein'], mittel: ['bald', 'Aufwand mittel'], gross: ['akut', 'Aufwand groß'], 'groß': ['akut', 'Aufwand groß'] };
+  function row(a) {
+    var neu = !a.umsetzbar && !a.kurz, u = UMS[a.umsetzbar], f = AUF[a.aufwand];
+    var gratis = /^(kostenlos|0\s*(€|eur))/i.test(String(a.kosten || ''));
+    var tags = neu ? '<span class="pill info">Wartet auf Claude</span>' :
+      (u ? '<span class="pill ' + u[0] + '">' + u[1] + '</span>' : '') + (f ? '<span class="pill ' + f[0] + '">' + f[1] + '</span>' : '') +
+      (a.kosten ? '<span class="pill ' + (gratis ? 'ruhig' : 'bald') + '">' + (gratis ? 'Kostenlos' : esc(a.kosten)) + '</span>' : '') +
+      (a.status === 'umgesetzt' ? '<span class="pill info">Umgesetzt</span>' : '');
+    return '<li class="ideen-item' + (a.status === 'umgesetzt' ? ' fertig' : '') + '"><div class="ideen-head"><b>' + esc(a.text) + '</b>' +
+      '<button class="shop-del" type="button" data-del="' + esc(a.id) + '" aria-label="Idee löschen">✕</button></div>' +
+      '<div class="ideen-tags">' + tags + '</div>' +
+      (a.kurz ? '<p>' + esc(a.kurz) + '</p>' : '') +
+      (a.loesung ? '<p class="loesung"><b>Einfachste Lösung:</b> ' + esc(a.loesung) + '</p>' : '') +
+      (neu ? '<p class="wart">Claude bewertet die Idee beim nächsten Lauf (stündlich zwischen 8 und 21 Uhr).</p>' : '') + '</li>';
+  }
+  function render() {
+    var o = state();
+    var list = o.ideen.slice().sort(function (x, y) {
+      var nx = !x.umsetzbar && !x.kurz ? 0 : 1, ny = !y.umsetzbar && !y.kurz ? 0 : 1;
+      var fx = x.status === 'umgesetzt' ? 1 : 0, fy = y.status === 'umgesetzt' ? 1 : 0;
+      return fx - fy || nx - ny || String(y.zeit).localeCompare(String(x.zeit));
+    });
+    var offen = list.filter(function (a) { return a.status !== 'umgesetzt'; }).length;
+    $('ideenBtn').textContent = '💡 Ideen' + (offen ? ' · ' + offen : '');
+    $('ideenCount').textContent = offen ? offen + ' offen' : '';
+    $('ideenList').innerHTML = list.length ? '<ul class="shop-ul">' + list.map(row).join('') + '</ul>' :
+      '<p class="empty">Noch keine Ideen. Schreib oben, was Tagesblick können soll, oder schick Claude einen Zuruf wie „Idee: Wetter im Radar“.</p>';
+  }
+  function op(o) { var ops = get(OPS, []); ops.push(o); put(OPS, ops); render(); flush(); }
+  function flush() {
+    var io = window.TB_IDEEN_IO, ops = get(OPS, []);
+    if (!ops.length) return;
+    if (!io) { msg('Auf diesem Gerät gespeichert. Gesendet wird aus der angemeldeten App.'); return; }
+    io.apply(function (o) { applyOps(o, ops); }).then(function (o) {
+      put(OPS, get(OPS, []).slice(ops.length)); put(CACHE, o); render(); msg('');
+    }).catch(function () { msg('OneDrive nicht erreichbar. Deine Änderungen bleiben auf dem Gerät und werden später gesendet.'); });
+  }
+  function reload() {
+    var io = window.TB_IDEEN_IO;
+    var p = io ? io.load() : fetch('ideen.json?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { if (!r.ok) throw 0; return r.json(); });
+    return p.then(function (o) { if (o && Array.isArray(o.ideen)) put(CACHE, o); render(); flush(); }).catch(function () { render(); flush(); });
+  }
+  function bind() {
+    bound = true;
+    $('ideenBtn').addEventListener('click', function () { if (dlg.showModal) dlg.showModal(); else dlg.setAttribute('open', ''); reload(); });
+    dlg.addEventListener('click', function (ev) {
+      var r = dlg.getBoundingClientRect();
+      var outside = ev.clientX < r.left || ev.clientX > r.right || ev.clientY < r.top || ev.clientY > r.bottom;
+      if ((outside && ev.clientX + ev.clientY > 0) || ev.target.closest('.x')) { if (dlg.close) dlg.close(); else dlg.removeAttribute('open'); return; }
+      var d = ev.target.closest('[data-del]');
+      if (d && window.confirm('Diese Idee löschen?')) op({ op: 'del', id: d.getAttribute('data-del') });
+    });
+    $('ideenAdd').addEventListener('submit', function (ev) {
+      ev.preventDefault();
+      var t = $('ideenIn').value.trim(); if (!t) return;
+      $('ideenIn').value = '';
+      var id = 'i' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+      op({ op: 'add', id: id, item: { id: id, text: t, neu: true, zeit: new Date().toISOString() } });
+    });
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) reload(); });
+  }
+  window.tbIdeen = function () { if (!dlg) return; if (!bound) bind(); reload(); };
+})();
+</script>
+<script>
 /* Nachverfolgung von E-Mails. Daten in nachverfolgung.json im OneDrive-Ordner:
    verfolgt  = Mails, bei deren Antwort Claude einen klingelnden Kalendertermin anlegt (Ein- und Ausschalten nur mit Bestätigung).
    meldungen = Antworten auf gesternte oder verfolgte Mails, die Claude gefunden hat. Ungelesene zeigt die App als Pop-up. */
@@ -1677,7 +1787,7 @@ window.tagesblickInit = function () {
     if (btn) { var b = document.createElement('button'); b.type = 'button'; b.className = 'btn'; b.textContent = btn; b.style.marginLeft = '10px'; b.onclick = fn; n.appendChild(b); }
   }
   function parse(text) { return JSON.parse(text.slice(text.indexOf('{'), text.lastIndexOf('}') + 1)); }
-  function start(d, msg, btn, fn) { window.TAGESBLICK = d; window.tagesblickInit(); note(msg || '', btn, fn); if (window.tbZuruf) window.tbZuruf(d); if (window.tbShop) window.tbShop(); if (window.tbFolge) window.tbFolge(); }
+  function start(d, msg, btn, fn) { window.TAGESBLICK = d; window.tagesblickInit(); note(msg || '', btn, fn); if (window.tbZuruf) window.tbZuruf(d); if (window.tbShop) window.tbShop(); if (window.tbFolge) window.tbFolge(); if (window.tbIdeen) window.tbIdeen(); }
   function cached() { try { var c = ls(CACHE); return c && JSON.parse(c); } catch (e) { return null; } }
   function localMap() { try { return JSON.parse(ls(LOCALERL) || '{}') || {}; } catch (e) { return {}; } }
   function fallback(msg, btn, fn) { var d = cached(); start(d || EMPTY, d ? msg + ' Gezeigt wird der zuletzt gespeicherte Stand.' : msg, btn, fn); }
@@ -1828,6 +1938,29 @@ window.tagesblickInit = function () {
             });
           });
           shopLauf = p.catch(function () {});
+          return p;
+        }
+      };
+      /* Ideensammlung: ideen.json. Die App wendet ihre Änderungen immer auf den frisch gelesenen Stand an. */
+      var ideenLauf = Promise.resolve();
+      function ladeIdeen(tok) {
+        return fetch(url('ideen.json'), { headers: { Authorization: 'Bearer ' + tok }, cache: 'no-store' })
+          .then(function (r) { if (r.status === 404) return { ideen: [] }; if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+          .then(function (o) { if (!o || !Array.isArray(o.ideen)) o = { ideen: [] }; return o; });
+      }
+      window.TB_IDEEN_IO = {
+        load: function () { return token().then(ladeIdeen); },
+        apply: function (fn) {
+          var p = ideenLauf.then(function () {
+            return token().then(function (tok) {
+              return ladeIdeen(tok).then(function (o) {
+                fn(o);
+                return fetch(url('ideen.json'), { method: 'PUT', headers: { Authorization: 'Bearer ' + tok, 'Content-Type': 'application/json' }, body: JSON.stringify(o, null, 1) })
+                  .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return o; });
+              });
+            });
+          });
+          ideenLauf = p.catch(function () {});
           return p;
         }
       };
