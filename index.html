@@ -22,7 +22,7 @@ window.TB_LOOK = function (set) {
   var r = document.documentElement, o = {};
   try { o = JSON.parse(localStorage.getItem('tagesblick-look') || '{}'); } catch (e) {}
   if (set) { for (var k in set) o[k] = set[k]; try { localStorage.setItem('tagesblick-look', JSON.stringify(o)); } catch (e) {} }
-  var t = o.theme || 'kupfer', f = window.TB_FONTS[o.font], z = Math.min(1.4, Math.max(.8, (Number(o.size) || 100) / 100));
+  var t = /^(kupfer|blau|enterprise|pergament|gruen|aurora|koenigsgold|koenigssilber|rot|fcbayern|ueberraschung)$/.test(o.theme) ? o.theme : 'kupfer', f = window.TB_FONTS[o.font], z = Math.min(1.4, Math.max(.8, (Number(o.size) || 100) / 100));
   r.setAttribute('data-theme', t);
   ['--display', '--body', '--mono'].forEach(function (v, i) { if (f) r.style.setProperty(v, f[i]); else r.style.removeProperty(v); });
   r.style.setProperty('--z', z);
@@ -112,6 +112,17 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent-2); 
 
 /* Kopf */
 .hud { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 14px 24px; }
+.brand { position: relative; }
+.sbtools { display: flex; gap: 6px; flex: none; margin-left: auto; }
+@media (min-width: 1640px) { .sbtools { position: absolute; top: 20px; right: 14px; margin: 0; } }
+.sbtools .editbtn { flex: none; width: 34px; height: 34px; padding: 0; gap: 0; justify-content: center; border-width: 1px; border-color: var(--line); color: var(--muted); }
+.sbtools .editbtn:hover, .sbtools .editbtn:focus-visible { border-color: var(--accent); color: var(--accent); background: transparent; box-shadow: none; }
+.editing .sbtools .editbtn { background: var(--accent); border-color: var(--accent); color: var(--bg); box-shadow: 0 0 20px var(--glow); }
+html.handy .sbtools .editbtn { width: 42px; height: 42px; }
+.reload { flex: none; width: 34px; height: 34px; display: grid; place-items: center; padding: 0; border: 1px solid var(--line); border-radius: 50%; background: transparent; color: var(--muted); cursor: pointer; }
+.reload:hover, .reload:focus-visible { color: var(--accent); border-color: var(--accent); }
+.reload:active svg { transform: rotate(180deg); }
+html.handy .reload { width: 42px; height: 42px; }
 .clock { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 16px; }
 #clock { font-family: var(--display); font-weight: 700; font-size: clamp(40px, 7vw, 64px); line-height: .95; letter-spacing: .02em; font-variant-numeric: tabular-nums; text-shadow: 0 0 28px var(--glow); }
 .date { font-family: var(--mono); font-size: 13px; color: var(--muted); letter-spacing: .08em; text-transform: uppercase; }
@@ -259,6 +270,13 @@ html.handy .chip.link { padding: 9px 12px; font-size: 13px; }
 html.handy .tool { width: 38px; height: 38px; }
 html.handy .mail-report { width: 100vw; max-width: 100vw; height: 100dvh; max-height: 100dvh; margin: 0; border-radius: 0; border-width: 0; padding: 16px 16px calc(16px + env(safe-area-inset-bottom, 0px)); font-size: 17px; }
 html.handy .mail-report .x { width: 40px; height: 40px; font-size: 18px; }
+/* Kein Herunterziehen zum Neuladen; Fenster behalten ihre Titelzeile und haben unten einen Schließen-Knopf */
+html, body { overscroll-behavior-y: none; }
+.mail-report { overscroll-behavior: contain; }
+.mail-report > h3:first-child { position: sticky; top: -16px; z-index: 3; margin: -16px -18px 8px; padding: 14px 18px 8px; background: var(--bg); border-bottom: 1px solid var(--line); }
+html.handy .mail-report > h3:first-child { top: -16px; margin: -16px -16px 8px; padding: 14px 16px 8px; }
+.mail-report .x.wide { width: auto; height: auto; border-radius: 10px; padding: 10px 18px; font: inherit; font-weight: 600; color: var(--ink); border-color: var(--accent); }
+html.handy .mail-report .x.wide { width: 100%; height: auto; min-height: 48px; font-size: 1em; margin-top: 8px; }
 html.handy .shop-item label { padding: 14px 0; gap: 14px; font-size: 1.1em; }
 html.handy .shop-del { padding: 14px 10px; font-size: 1.1em; }
 html.handy .shop-add input { padding: 12px; font-size: 1.05em; }
@@ -495,11 +513,28 @@ html[data-theme="pergament"] .dot { box-shadow:none; }
 
 html[data-theme="gruen"] { --bg:#0D1A14; --panel:rgba(214,190,120,.06); --panel-2:rgba(214,190,120,.12); --line:rgba(201,169,79,.26); --ink:#EFE8D4; --muted:#A5A58F; --accent:#C9A94F; --accent-2:#7FB08A; --accent-3:#7FB08A; --glow:rgba(201,169,79,.3); --scrim:rgba(5,12,9,.76); --bg1:rgba(201,169,79,.12); --bg2:rgba(127,176,138,.09); --gridc:rgba(201,169,79,.035); --ich:#C9A94F; --familie:#A9B59A; --display:"Libre Baskerville",Georgia,serif; --body:"Lora",Georgia,serif; --mono:"IBM Plex Mono",Consolas,monospace; }
 
-html[data-theme="neon"] { --bg:#05060F; --panel:rgba(0,229,255,.05); --panel-2:rgba(0,229,255,.11); --line:rgba(0,229,255,.30); --ink:#E6F9FF; --muted:#7FA0B8; --accent:#00E5FF; --accent-2:#FF2BD6; --accent-3:#B6FF3C; --glow:rgba(0,229,255,.5); --scrim:rgba(2,3,10,.8); --akut:#FF4D6D; --bald:#FFD23C; --ruhig:#B6FF3C; --luise:#C79BFF; --pauline:#FF7AD9; --ich:#00E5FF; --familie:#8CC8D8; --bg1:rgba(0,229,255,.16); --bg2:rgba(255,43,214,.13); --gridc:rgba(0,229,255,.06); --display:"Orbitron",system-ui,sans-serif; --body:"Rajdhani",system-ui,sans-serif; --mono:"Share Tech Mono",Consolas,monospace; }
-html[data-theme="neon"] body { font-size:14px; }
-html[data-theme="neon"] h2, html[data-theme="neon"] .brand b { letter-spacing:.08em; text-transform:uppercase; }
-html[data-theme="neon"] .mod { border-radius:3px; box-shadow:0 0 0 1px rgba(0,229,255,.08), 0 0 22px rgba(0,229,255,.07); clip-path:polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 14px 100%, 0 calc(100% - 14px)); }
 
+html[data-theme="koenigsgold"] { --bg:#060C26; --panel:rgba(120,150,255,.06); --panel-2:rgba(120,150,255,.11); --line:rgba(227,179,65,.28); --ink:#F4EFDF; --muted:#9FA9CC; --accent:#E3B341; --accent-2:#6C8DFF; --accent-3:#6C8DFF; --glow:rgba(227,179,65,.38); --scrim:rgba(3,6,20,.78); --akut:#FF5D6C; --bald:#FFC555; --ruhig:#4DE5A5; --luise:#B79CFF; --pauline:#FF8CC6; --ich:#E3B341; --familie:#9FB6FF; --bg1:rgba(40,80,220,.28); --bg2:rgba(227,179,65,.10); --gridc:rgba(227,179,65,.03); --display:"Playfair Display",Georgia,serif; --body:"Sora",system-ui,sans-serif; }
+html[data-theme="koenigssilber"] { --bg:#060C26; --panel:rgba(120,150,255,.06); --panel-2:rgba(120,150,255,.11); --line:rgba(205,215,235,.28); --ink:#EEF2FA; --muted:#9FA9CC; --accent:#D3DAE8; --accent-2:#6C8DFF; --accent-3:#6C8DFF; --glow:rgba(205,215,235,.30); --scrim:rgba(3,6,20,.78); --akut:#FF5D6C; --bald:#FFC555; --ruhig:#4DE5A5; --luise:#B79CFF; --pauline:#FF8CC6; --ich:#D3DAE8; --familie:#9FB6FF; --bg1:rgba(40,80,220,.28); --bg2:rgba(205,215,235,.08); --gridc:rgba(205,215,235,.03); --display:"Chakra Petch","Sora",system-ui,sans-serif; --body:"Sora",system-ui,sans-serif; }
+html[data-theme="rot"] { --bg:#150709; --panel:rgba(255,120,120,.055); --panel-2:rgba(255,120,120,.10); --line:rgba(255,90,90,.26); --ink:#FBEAEA; --muted:#BB9494; --accent:#FF4D4F; --accent-2:#FF9A8B; --accent-3:#FFC2B4; --glow:rgba(255,77,79,.40); --scrim:rgba(14,3,5,.78); --akut:#FF8A8A; --bald:#FFC555; --ruhig:#4DE5A5; --luise:#C79BFF; --pauline:#FF8CC6; --ich:#FF4D4F; --familie:#D2A8A8; --bg1:rgba(255,60,60,.16); --bg2:rgba(255,150,100,.08); --gridc:rgba(255,90,90,.035); --display:"Fraunces",Georgia,serif; --body:"Sora",system-ui,sans-serif; }
+html[data-theme="fcbayern"] { color-scheme:light; --bg:#FFFFFF; --panel:#FFFFFF; --panel-2:#E6EDF8; --line:rgba(0,102,178,.30); --ink:#0E1B33; --muted:#51607A; --accent:#DC052D; --accent-2:#0066B2; --accent-3:#0066B2; --glow:rgba(220,5,45,.14); --scrim:rgba(10,25,50,.55); --akut:#C4001F; --bald:#A8690F; --ruhig:#1F7A4D; --luise:#7A3FB5; --pauline:#D6458C; --ich:#DC052D; --familie:#0066B2; --bg1:rgba(0,0,0,0); --bg2:rgba(0,0,0,0); --gridc:rgba(0,0,0,0); --display:"Space Grotesk",system-ui,sans-serif; --body:"Space Grotesk",system-ui,sans-serif; }
+html[data-theme="fcbayern"] body { background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56'%3E%3Cpath d='M28 0L56 28L28 56L0 28Z' fill='%230066B2' fill-opacity='.10'/%3E%3C/svg%3E") 0 0 / 56px 56px, #FFFFFF; background-attachment: fixed; }
+html[data-theme="fcbayern"] .sidebar { background:#DC052D; border-color:#DC052D; color:#fff; }
+html[data-theme="fcbayern"] .brand b, html[data-theme="fcbayern"] .brand small, html[data-theme="fcbayern"] .navlabel { color:#fff; }
+html[data-theme="fcbayern"] .brand svg { filter:none; }
+html[data-theme="fcbayern"] .brand svg circle { stroke:#fff; }
+html[data-theme="fcbayern"] .brand svg circle[fill="var(--accent)"], html[data-theme="fcbayern"] .brand svg circle[fill="var(--accent-2)"] { fill:#fff; }
+html[data-theme="fcbayern"] .nav button { color:#fff; border-color:rgba(255,255,255,.35); }
+html[data-theme="fcbayern"] .nav button:hover { background:rgba(255,255,255,.16); color:#fff; }
+html[data-theme="fcbayern"] .nav button[aria-pressed="true"] { background:#fff; color:#DC052D; border-color:#fff; box-shadow:none; }
+html[data-theme="fcbayern"] .sbtools .editbtn, html[data-theme="fcbayern"] .reload { color:#fff; border-color:rgba(255,255,255,.6); }
+html[data-theme="fcbayern"] .sbtools .editbtn:hover, html[data-theme="fcbayern"] .reload:hover { background:rgba(255,255,255,.18); color:#fff; border-color:#fff; }
+html[data-theme="fcbayern"].editing .sbtools .editbtn, html[data-theme="fcbayern"] .editing .sbtools .editbtn { background:#fff; color:#DC052D; border-color:#fff; box-shadow:none; }
+html[data-theme="fcbayern"] .mhead { background:#DC052D; border-bottom:0; }
+html[data-theme="fcbayern"] h2 { color:#fff; }
+html[data-theme="fcbayern"] .mhead .note { color:rgba(255,255,255,.88); }
+html[data-theme="fcbayern"] .mhead .tool { color:#fff; border-color:rgba(255,255,255,.6); }
+html[data-theme="fcbayern"] .dot { box-shadow:none; }
 html[data-theme="aurora"] { --bg:#070B1A; --panel:rgba(255,255,255,.055); --panel-2:rgba(255,255,255,.11); --line:rgba(190,200,255,.20); --ink:#F1F4FF; --muted:#9AA5CC; --accent:#7CF5D0; --accent-2:#A78BFA; --accent-3:#FF9ED8; --glow:rgba(124,245,208,.35); --scrim:rgba(4,6,18,.78); --bg1:rgba(120,80,255,.30); --bg2:rgba(0,255,190,.17); --gridc:rgba(255,255,255,0); --ich:#7CF5D0; --familie:#B6BEE0; --display:"Exo 2",system-ui,sans-serif; --body:"Exo 2",system-ui,sans-serif; --mono:"JetBrains Mono",Consolas,monospace; }
 html[data-theme="aurora"] .mod, html[data-theme="aurora"] .sidebar, html[data-theme="aurora"] .tl, html[data-theme="aurora"] .voice { border-radius:18px; -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px); }
 html[data-theme="aurora"] .chip, html[data-theme="aurora"] .btn { border-radius:999px; }
@@ -581,6 +616,13 @@ html[data-theme="ueberraschung"] .editbtn:hover, html[data-theme="ueberraschung"
       <div class="nav" id="nav"></div>
     </div>
     <span class="chip demo" id="demoChip" hidden>Demo · Beispieldaten</span>
+    <div class="sbtools">
+      <button class="editbtn" type="button" id="edit" aria-pressed="false" aria-label="Anordnen" title="Anordnen">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9" fill="none"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" fill="none"/></svg>
+          <span id="editLabel" hidden>Anordnen</span>
+        </button>
+        <button class="reload" type="button" id="reloadBtn" aria-label="Seite neu laden" title="Neu laden"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg></button>
+    </div>
   </aside>
 
   <div class="main">
@@ -603,10 +645,6 @@ html[data-theme="ueberraschung"] .editbtn:hover, html[data-theme="ueberraschung"
           <button type="button" id="vRadar" aria-pressed="false">Radar</button>
         </span>
         <button class="resetbtn" type="button" id="reset">Zurücksetzen</button>
-        <button class="editbtn" type="button" id="edit" aria-pressed="false">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9" fill="none"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" fill="none"/></svg>
-          <span id="editLabel">Anordnen</span>
-        </button>
       </div>
     </div>
 
@@ -1168,6 +1206,7 @@ window.tagesblickInit = function () {
     <button class="btn" type="button" id="shopClear" hidden>Gekaufte entfernen</button>
     <span class="why">Claude sortiert neue Artikel ein und prüft, ob es sie bei Lidl gibt. Sonst sagt er dir, ob Aldi oder Netto sie haben.</span>
   </div>
+  <button class="x wide" type="button">Schließen</button>
 </dialog>
 <dialog class="mail-report shop ideen" id="ideen" aria-label="Ideensammlung">
   <h3><span>Ideensammlung <small id="ideenCount"></small></span><button class="x" type="button" aria-label="Schließen">✕</button></h3>
@@ -1180,6 +1219,7 @@ window.tagesblickInit = function () {
   <div class="shop-foot">
     <span class="why">Claude bewertet jede Idee kurz: ob es geht, wie groß der Aufwand ist und was es kostet, und sucht dafür immer die kostenlose, einfache Lösung. Gebaut wird erst, wenn du es sagst. Du kannst Ideen auch per Zuruf schicken: „Idee: …“.</span>
   </div>
+  <button class="x wide" type="button">Schließen</button>
 </dialog>
 <dialog class="mail-report folge-ask" id="folgeAsk" aria-label="Nachverfolgung bestätigen">
   <h3><span id="folgeAskT">Nachverfolgung einschalten?</span><button class="x" type="button" aria-label="Schließen">✕</button></h3>
@@ -1220,8 +1260,11 @@ window.tagesblickInit = function () {
     ['enterprise', 'Enterprise', 'Raumschiff-Layout', ['#000000', '#FF9C00', '#9999FF']],
     ['pergament', 'Pergament', 'Klassisch, hell', ['#F3EBDA', '#8A2B2B', '#9A7424']],
     ['gruen', 'Englisch Grün', 'Klassisch, dunkel', ['#0D1A14', '#C9A94F', '#7FB08A']],
-    ['neon', 'Neon', 'Futuristisch', ['#05060F', '#00E5FF', '#FF2BD6']],
     ['aurora', 'Aurora', 'Futuristisch, Glas', ['#070B1A', '#7CF5D0', '#A78BFA']],
+    ['koenigsgold', 'Königsblau & Gold', 'Edel, dunkel', ['#060C26', '#E3B341', '#6C8DFF']],
+    ['koenigssilber', 'Königsblau & Silber', 'Kühl, dunkel', ['#060C26', '#D3DAE8', '#6C8DFF']],
+    ['rot', 'Rot', 'Warm, dunkel', ['#150709', '#FF4D4F', '#FF9A8B']],
+    ['fcbayern', 'FC Bayern', 'Rot, Weiß, Blau', ['#DC052D', '#FFFFFF', '#0066B2']],
     ['ueberraschung', 'Überraschung', 'Lass dich überraschen', ['#FFE45E', '#FF3D71', '#2D6BFF']]
   ];
   var $ = function (id) { return document.getElementById(id); };
@@ -2030,6 +2073,26 @@ window.tagesblickInit = function () {
         if (onSet) onSet(key, on);
       }
     };
+  }
+})();
+</script>
+<script>
+/* Offline: Herunterziehen darf nicht neu laden. Außerdem hält ein Service Worker die Seite für den Neustart ohne Netz bereit. */
+(function () {
+  var y0 = null;
+  var rb = document.getElementById('reloadBtn');
+  if (rb) rb.addEventListener('click', function () { location.reload(); });
+  document.addEventListener('touchstart', function (e) { y0 = e.touches.length === 1 ? e.touches[0].clientY : null; }, { passive: true });
+  document.addEventListener('touchmove', function (e) {
+    if (navigator.onLine !== false || y0 === null || !e.cancelable) return;
+    if (e.touches[0].clientY <= y0) return;
+    for (var n = e.target; n && n !== document.documentElement; n = n.parentNode) {
+      if (n.scrollTop > 0) return;
+    }
+    e.preventDefault();
+  }, { passive: false });
+  if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
+    window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
   }
 })();
 </script>
