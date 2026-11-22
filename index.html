@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Tagesblick</title>
+<title>Merk es</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#110B08">
 <meta name="mobile-web-app-capable" content="yes">
@@ -92,6 +92,12 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent-2); 
 .brand { display: flex; align-items: center; gap: 12px; padding: 0 4px; }
 .brand svg { flex: none; filter: drop-shadow(0 0 10px var(--glow)); }
 .brand b { display: block; font-family: var(--display); font-weight: 600; font-size: 19px; letter-spacing: .04em; }
+/* Wortbild „Merk es“: aus Markus wird Merk es. Das alte a und u hängt blass, weggekippt und zu etwa drei Vierteln nach unten geschoben, das neue e steht etwa ein Viertel nach oben darüber. */
+.wm { white-space: nowrap; padding-bottom: .22em; }
+.wm .ers { position: relative; display: inline-block; font-style: normal; }
+.wm .ers i { font-style: normal; }
+.wm .alt { display: inline-block; transform: translateY(.36em) rotate(24deg); transform-origin: 50% 50%; opacity: .38; font-size: .9em; }
+.wm .neu { position: absolute; left: 0; right: 0; top: 0; text-align: center; transform: translateY(-.16em); color: var(--accent); }
 .brand small { display: block; font-family: var(--mono); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
 .navlabel { font-family: var(--mono); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); padding: 0 6px; }
 .navwrap { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
@@ -609,7 +615,7 @@ html[data-theme="ueberraschung"] .editbtn:hover, html[data-theme="ueberraschung"
   <aside class="sidebar">
     <div class="brand">
       <svg width="36" height="36" viewBox="0 0 36 36" aria-hidden="true"><circle cx="18" cy="18" r="16" fill="none" stroke="var(--line)" stroke-width="1.5"/><circle cx="18" cy="18" r="10" fill="none" stroke="var(--accent-2)" stroke-width="1.5"/><circle cx="18" cy="18" r="3.5" fill="var(--accent)"/><circle cx="29" cy="10" r="2.5" fill="var(--accent-2)"/></svg>
-      <div><b>Tagesblick</b><small>Familien-Leitstand</small></div>
+      <div><b class="wm" aria-label="Merk es">M<span class="ers" aria-hidden="true"><i class="neu">e</i><i class="alt">a</i></span>rk<span class="ers" aria-hidden="true"><i class="neu">e</i><i class="alt">u</i></span>s</b><small>Familien-Leitstand</small></div>
     </div>
     <div class="navwrap">
       <span class="navlabel">Anzeigen für</span>
@@ -617,6 +623,8 @@ html[data-theme="ueberraschung"] .editbtn:hover, html[data-theme="ueberraschung"
     </div>
     <span class="chip demo" id="demoChip" hidden>Demo · Beispieldaten</span>
     <div class="sbtools">
+      <button class="reload" type="button" id="fsBtn" aria-label="Vollbild" title="Vollbild" aria-pressed="false" hidden><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5"/><path d="M20 9V4h-5"/><path d="M4 15v5h5"/><path d="M20 15v5h-5"/></svg></button>
+      <button class="reload setbtn" type="button" id="setBtn" aria-expanded="false" aria-label="Design" title="Design"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18c1.2 0 2-.8 2-1.8 0-.5-.2-.9-.5-1.3-.3-.4-.5-.8-.5-1.3 0-1 .8-1.8 1.8-1.8H17a4 4 0 0 0 4-4C21 6.6 17 3 12 3Z"/><circle cx="7.5" cy="11.5" r="1" fill="currentColor"/><circle cx="10.5" cy="7.5" r="1" fill="currentColor"/><circle cx="15.5" cy="7.5" r="1" fill="currentColor"/></svg></button>
       <button class="editbtn" type="button" id="edit" aria-pressed="false" aria-label="Anordnen" title="Anordnen">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9" fill="none"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" fill="none"/></svg>
           <span id="editLabel" hidden>Anordnen</span>
@@ -637,8 +645,6 @@ html[data-theme="ueberraschung"] .editbtn:hover, html[data-theme="ueberraschung"
         <button class="chip link shopbtn" type="button" id="shopBtn">🛒 Einkauf</button>
         <button class="chip link shopbtn" type="button" id="ideenBtn">💡 Ideen</button>
         <button class="chip link" type="button" id="handyBtn" aria-pressed="false">📱 Handy</button>
-        <button class="chip link" type="button" id="fsBtn" hidden>Vollbild</button>
-        <button class="chip link setbtn" type="button" id="setBtn" aria-expanded="false">Design</button>
         <button class="chip link setsrc" type="button" id="srcBtn">Datenquelle</button>
         <span class="seg" role="group" aria-label="Ansicht der nächsten 14 Tage">
           <button type="button" id="vZeit" aria-pressed="true">Zeitleiste</button>
@@ -1301,7 +1307,7 @@ window.tagesblickInit = function () {
   var req = el.requestFullscreen || el.webkitRequestFullscreen;
   if (!b || app || !req) return;
   function isFs() { return !!(d.fullscreenElement || d.webkitFullscreenElement); }
-  function label() { b.textContent = isFs() ? 'Vollbild aus' : 'Vollbild'; }
+  function label() { var f = isFs(); b.title = f ? 'Vollbild beenden' : 'Vollbild'; b.setAttribute('aria-label', b.title); b.setAttribute('aria-pressed', String(f)); }
   b.hidden = false;
   b.addEventListener('click', function () {
     if (isFs()) (d.exitFullscreen || d.webkitExitFullscreen).call(d);
