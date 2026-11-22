@@ -788,6 +788,8 @@ html[data-theme="ueberraschung"] .editbtn:hover, html[data-theme="ueberraschung"
             <p>Mails oder Nachrichten an andere schicken, etwas löschen oder bezahlen. Darum bitte ich dich immer erst per Rückfrage. Passwörter, Kontonummern und Diagnosen kommen nicht in Tagesblick.</p>
           </section>
         </dialog>
+        <div class="mail-report-bar" id="zrHistBar" hidden><button class="btn" type="button" id="zrHistBtn">Erledigte Zurufe</button></div>
+        <dialog id="zrHist" class="mail-report" aria-label="Erledigte Zurufe"></dialog>
         <ul class="zr-list" id="zrList"></ul>
       </div></section>
     </div>
@@ -1562,14 +1564,34 @@ window.tagesblickInit = function () {
     var offen = all.filter(function (m) { return m.status !== 'erledigt'; }).length;
     var rf = all.filter(function (m) { return m.status === 'rueckfrage'; }).length;
     if ($('zrCount')) $('zrCount').textContent = rf ? rf + ' Rückfrage' + (rf > 1 ? 'n' : '') : offen ? offen + ' offen' : '';
-    $('zrList').innerHTML = all.slice(0, 12).map(function (m) {
+    /* Offene Zurufe bleiben immer sichtbar, bis Claude sie erledigt hat. Erledigte stehen im Verlaufsfenster. */
+    var done = all.filter(function (m) { return m.status === 'erledigt'; });
+    all = all.filter(function (m) { return m.status !== 'erledigt'; });
+    $('zrHistBar').hidden = !done.length;
+    if (done.length) $('zrHistBtn').textContent = 'Erledigte Zurufe (' + done.length + ') · zuletzt ' + when(done[0].bearbeitet || done[0].zeit);
+    $('zrHist').innerHTML = '<h3><span>Erledigte Zurufe</span><button class="x wide" type="button" aria-label="Schließen">Schließen</button></h3>' +
+      done.map(function (m, i) {
+        return '<section class="rep' + (i === 0 ? ' latest' : '') + '"><h4>' + esc(when(m.zeit)) + (i === 0 ? ' · neuester' : '') + '</h4><p>' + esc(m.text) + '</p>' +
+          (m.anhaenge && m.anhaenge.length ? '<p>📷 ' + m.anhaenge.length + (m.anhaenge.length > 1 ? ' Anhänge' : ' Anhang') + '</p>' : '') +
+          (m.antwort ? '<p><i>' + esc(m.antwort) + '</i></p>' : '') + '</section>';
+      }).join('');
+    $('zrList').innerHTML = all.map(function (m) {
       var s = STATUS[m.status] || STATUS.offen;
       return '<li><div class="zr-meta"><span class="pill ' + s[0] + '">' + s[1] + '</span><span>' + esc(when(m.zeit)) + '</span></div>' +
         '<p class="zr-t">' + esc(m.text) + '</p>' +
         (m.anhaenge && m.anhaenge.length ? '<span class="zr-att">📷 ' + m.anhaenge.length + (m.anhaenge.length > 1 ? ' Anhänge' : ' Anhang') + '</span>' : '') + (m.antwort ? '<p class="zr-a">' + esc(m.antwort) + '</p>' : '') +
         (m.status === 'rueckfrage' ? '<button class="btn zr-reply" type="button" data-reply="' + esc(m.id) + '">Antworten</button>' : '') +
         (m.status === 'offen' || m.status === 'unterwegs' ? '<div class="zr-tools"><button class="btn" type="button" data-edit="' + esc(m.id) + '">Bearbeiten</button><button class="btn" type="button" data-del="' + esc(m.id) + '">Löschen</button></div>' : '') + '</li>';
-    }).join('') || '<li class="empty">Noch keine Zurufe. Schreib oben, was ich eintragen oder erledigen soll.</li>';
+    }).join('') || '<li class="empty">Nichts offen. Schreib oben, was ich eintragen oder erledigen soll.</li>';
+  }
+  /* Schutz gegen verschwundene Zurufe: Fehlt ein noch offener Zuruf kurz in der Antwort von OneDrive
+     (Datei gerade im Abgleich, 404), bleibt er aus dem letzten Stand erhalten, höchstens 7 Tage. */
+  function keep(list) {
+    var ids = {}; list.forEach(function (m) { ids[m.id] = 1; });
+    var lim = Date.now() - 7 * 864e5, old = get(LIST, []).filter(function (m) {
+      return m && !ids[m.id] && m.status !== 'erledigt' && new Date(m.zeit).getTime() > lim;
+    });
+    return old.length ? list.concat(old) : list;
   }
   function flush() {
     var io = window.TB_ZR_IO, pend = get(PEND, []);
@@ -1579,11 +1601,19 @@ window.tagesblickInit = function () {
     io.push(pend).then(function (list) {
       var sent = {}; pend.forEach(function (m) { sent[m.id] = 1; });
       put(PEND, get(PEND, []).filter(function (m) { return !sent[m.id]; }));
-      put(LIST, list); render(); msg('Gesendet. Claude holt es beim nächsten Lauf ab.');
+      put(LIST, keep(list)); render(); msg('Gesendet. Claude holt es beim nächsten Lauf ab.');
     }).catch(function () { msg('OneDrive nicht erreichbar. Der Zuruf bleibt auf dem Gerät und wird später gesendet.'); });
   }
   function bind() {
     bound = true;
+    /* Verlauf erledigter Zurufe im Fenster, wie bei den E-Mail-Berichten */
+    var hist = $('zrHist');
+    $('zrHistBtn').addEventListener('click', function () { if (hist.showModal) hist.showModal(); else hist.setAttribute('open', ''); hist.scrollTop = 0; });
+    hist.addEventListener('click', function (ev) {
+      var r = hist.getBoundingClientRect();
+      var outside = ev.clientX < r.left || ev.clientX > r.right || ev.clientY < r.top || ev.clientY > r.bottom;
+      if (outside || ev.target.closest('.x')) { if (hist.close) hist.close(); else hist.removeAttribute('open'); }
+    });
     /* Diktieren: Spracherkennung des Browsers (Chrome, Edge), Text wird ans Feld angehängt */
     var SR = window.SpeechRecognition || window.webkitSpeechRecognition, mic = $('zrMic'), rec = null, basis = '';
     if (SR) {
@@ -1732,7 +1762,7 @@ window.tagesblickInit = function () {
     if (!bound) bind();
     render();
     var io = window.TB_ZR_IO;
-    if (io) io.load().then(function (list) { put(LIST, list); render(); flush(); }).catch(function () { flush(); });
+    if (io) io.load().then(function (list) { put(LIST, keep(list)); render(); flush(); }).catch(function () { flush(); });
     else flush();
   };
 })();
