@@ -94,10 +94,18 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent-2); 
 .brand b { display: block; font-family: var(--display); font-weight: 600; font-size: 19px; letter-spacing: .04em; }
 /* Wortbild „Merk es“: aus Markus wird Merk es. Das alte a und u hängt blass, weggekippt und zu etwa drei Vierteln nach unten geschoben, das neue e steht etwa ein Viertel nach oben darüber. */
 .wm { white-space: nowrap; padding-bottom: .22em; }
+.brand .wm { font-size: 30px; line-height: 1; letter-spacing: .02em; }
+.brand svg { width: 40px; height: 40px; }
 .wm .ers { position: relative; display: inline-block; font-style: normal; }
 .wm .ers i { font-style: normal; }
-.wm .alt { display: inline-block; transform: translateY(.36em) rotate(24deg); transform-origin: 50% 50%; opacity: .38; font-size: .9em; }
-.wm .neu { position: absolute; left: 0; right: 0; top: 0; text-align: center; transform: translateY(-.16em); color: var(--accent); }
+.wm .ers:last-of-type { margin-left: .14em; }
+.wm .alt { display: inline-block; transform: translateY(.36em) rotate(24deg); transform-origin: 50% 50%; opacity: .38; font-size: .9em; animation: wmfall 1.1s cubic-bezier(.45,0,.9,.55) .5s both; }
+.wm .ers:last-of-type .alt { animation-delay: .85s; }
+.wm .ers:last-of-type .neu { animation-delay: .95s; }
+.wm .neu { position: absolute; left: 0; right: 0; top: 0; text-align: center; transform: translateY(-.16em); color: var(--accent); animation: wmdrop .7s cubic-bezier(.3,.7,.4,1) .6s both; }
+@keyframes wmfall { 0% { transform: translateY(0) rotate(0); opacity: 1; } 30% { transform: translateY(.04em) rotate(5deg); opacity: 1; } 78% { transform: translateY(.42em) rotate(29deg); opacity: .5; } 100% { transform: translateY(.36em) rotate(24deg); opacity: .38; } }
+@keyframes wmdrop { 0% { transform: translateY(-1.1em); opacity: 0; } 15% { opacity: 1; } 70% { transform: translateY(-.1em); } 85% { transform: translateY(-.2em); } 100% { transform: translateY(-.16em); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .wm .alt, .wm .neu { animation: none; } }
 .brand small { display: block; font-family: var(--mono); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
 .navlabel { font-family: var(--mono); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); padding: 0 6px; }
 .navwrap { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
@@ -109,7 +117,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent-2); 
 
 @media (max-width: 1639px) {
   .shell { grid-template-columns: minmax(0, 1fr); gap: 12px; }
-  .sidebar { position: static; flex-direction: row; align-items: center; gap: 14px; padding: 10px 12px; }
+  .sidebar { position: static; flex-direction: row; flex-wrap: nowrap; align-items: center; gap: 14px; padding: 10px 12px; }
   .brand small, .navlabel { display: none; }
   .navwrap { overflow-x: auto; flex: 1; }
   .nav { flex-direction: row; }
@@ -119,8 +127,8 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent-2); 
 /* Kopf */
 .hud { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 14px 24px; }
 .brand { position: relative; }
-.sbtools { display: flex; gap: 6px; flex: none; margin-left: auto; }
-@media (min-width: 1640px) { .sbtools { position: absolute; top: 20px; right: 14px; margin: 0; } }
+.sbtools { display: flex; gap: 6px; flex: none; order: -1; width: 100%; justify-content: flex-end; }
+@media (max-width: 1639px) { .sbtools { order: 0; width: auto; margin-left: auto; } }
 .sbtools .editbtn { flex: none; width: 34px; height: 34px; padding: 0; gap: 0; justify-content: center; border-width: 1px; border-color: var(--line); color: var(--muted); }
 .sbtools .editbtn:hover, .sbtools .editbtn:focus-visible { border-color: var(--accent); color: var(--accent); background: transparent; box-shadow: none; }
 .editing .sbtools .editbtn { background: var(--accent); border-color: var(--accent); color: var(--bg); box-shadow: 0 0 20px var(--glow); }
@@ -129,7 +137,10 @@ html.handy .sbtools .editbtn { width: 42px; height: 42px; }
 .reload:hover, .reload:focus-visible { color: var(--accent); border-color: var(--accent); }
 .reload:active svg { transform: rotate(180deg); }
 html.handy .reload { width: 42px; height: 42px; }
-.clock { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 16px; }
+.clock { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 16px; flex: 1 1 320px; min-width: 0; }
+.nextwhen { margin-left: auto; align-self: flex-end; display: flex; flex-direction: column; align-items: flex-end; gap: 2px; text-align: right; }
+.nextwhen .nw-l { font-family: var(--mono); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.nextwhen .nw-t { font-family: var(--display); font-weight: 700; font-size: 22px; line-height: 1.1; color: var(--accent); font-variant-numeric: tabular-nums; }
 #clock { font-family: var(--display); font-weight: 700; font-size: clamp(40px, 7vw, 64px); line-height: .95; letter-spacing: .02em; font-variant-numeric: tabular-nums; text-shadow: 0 0 28px var(--glow); }
 .date { font-family: var(--mono); font-size: 13px; color: var(--muted); letter-spacing: .08em; text-transform: uppercase; }
 .chips { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
@@ -179,6 +190,11 @@ a.btn { text-decoration: none; display: inline-block; }
 .mod.dragging { opacity: .55; box-shadow: 0 0 0 2px var(--accent), 0 0 30px var(--glow); }
 .mhead { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 10px; padding: 12px 12px 12px 16px; border-bottom: 1px solid var(--line); background: var(--panel); }
 h2 { font-family: var(--display); font-weight: 600; font-size: 16px; letter-spacing: .02em; color: var(--accent); margin-right: auto; }
+.mhead .attrs { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 auto 0 8px; min-width: 0; }
+.mhead .attrs:empty { display: none; }
+.mhead:has(.attrs:not(:empty)) h2 { margin-right: 0; }
+.attr { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border: 1px solid var(--line); border-radius: 999px; background: var(--panel-2); color: var(--ink); font-family: var(--body); font-size: 12px; line-height: 1.3; }
+.attr i { width: 8px; height: 8px; border-radius: 50%; flex: none; }
 .mhead .note { font-family: var(--mono); font-size: 11px; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .tools { display: flex; align-items: center; gap: 6px; }
 .tool { width: 32px; height: 32px; display: grid; place-items: center; padding: 0; border: 1px solid var(--line); border-radius: 50%; background: transparent; color: var(--muted); cursor: pointer; }
@@ -635,11 +651,10 @@ html[data-theme="ueberraschung"] .editbtn:hover, html[data-theme="ueberraschung"
 
   <div class="main">
     <div class="hud">
-      <div class="clock"><span id="clock">--:--</span><span class="date" id="date"></span></div>
+      <div class="clock"><span id="clock">--:--</span><span class="date" id="date"></span><span class="nextwhen" id="nextWhen" hidden></span></div>
       <div class="chips">
         <span class="chip" id="open"></span>
         <span class="chip akut" id="akut"></span>
-        <span class="chip" id="next" hidden></span>
         <a class="chip link" id="lGmail" href="https://mail.google.com/" target="_blank" rel="noopener">Gmail ↗</a>
         <a class="chip link" id="lKal" href="https://calendar.google.com/" target="_blank" rel="noopener">Kalender ↗</a>
         <button class="chip link shopbtn" type="button" id="shopBtn">🛒 Einkauf</button>
@@ -846,16 +861,18 @@ window.tagesblickInit = function () {
   function entryPriority(e) { return isUndatedTask(e) && !isDone(e) ? taskPriority(e) : e.pill; }
   var OVERDUE = ['Aufgabe', 'E-Mail', 'Vorsorge', 'Arbeit', 'Schulung'];
   var E = (D.eintraege || []).map(function (e, i) { e._i = i; return e; });
-  var todayList = E.filter(function (e) { return occurs(e, 0) || isUndatedTask(e); });
+  /* Ganztägige Termine (Termin oder Anlass mit Datum, ohne Uhrzeit) sind keine Einträge, sondern Merkmale eines Tages. Sie stehen im Kopf der Liste. */
+  function isAllDay(e) { return !!(e.datum && !e.zeit && (e.art === 'Termin' || e.art === 'Anlass')); }
+  var todayList = E.filter(function (e) { return !isAllDay(e) && (occurs(e, 0) || isUndatedTask(e)); });
   E.forEach(function (e) { if (e.datum && diff(e.datum) < 0 && !isDone(e) && OVERDUE.indexOf(e.art) >= 0) todayList.push(e); });
   todayList = todayList.filter(function (e, i, a) { return a.indexOf(e) === i && !doneEarlier(e); }).sort(function (a, b) {
     return byTime(a, b) || Number(!!isUndatedTask(a)) - Number(!!isUndatedTask(b)) ||
       (isUndatedTask(a) && isUndatedTask(b) ? taskAge(b) - taskAge(a) : 0);
   });
-  var tomorrowList = E.filter(function (e) { return occurs(e, 1); }).sort(byTime);
+  var tomorrowList = E.filter(function (e) { return !isAllDay(e) && occurs(e, 1); }).sort(byTime);
   /* Wie eine Sekretärin: bis 14 Tage vorher steht alles hier, Dinge mit langem Vorlauf (Arzt, Schulung) ab ihrem Erinnerungstag. */
   var aheadList = E.filter(function (e) {
-    if (!e.datum || isDone(e)) return false;
+    if (!e.datum || isDone(e) || isAllDay(e)) return false;
     var n = diff(e.datum), lead = e.vorlauf != null ? e.vorlauf : 3;
     return n >= 2 && (n <= 14 || n - lead <= 0);
   })
@@ -874,7 +891,7 @@ window.tagesblickInit = function () {
     var id = m.dataset.id, t = m.dataset.title;
     var head = document.createElement('div');
     head.className = 'mhead';
-    head.innerHTML = '<h2>' + t + '</h2>' +
+    head.innerHTML = '<h2>' + t + '</h2><span class="attrs" id="attrs-' + id + '"></span>' +
       '<span class="note"' + (m.dataset.noteId ? ' id="' + m.dataset.noteId + '"' : '') + '>' + (m.dataset.note || '') + '</span>' +
       '<div class="tools">' +
       '<button class="tool edit" type="button" id="prev-' + id + '" data-act="prev" aria-label="' + t + ' nach vorn schieben">' + ICON.prev + '</button>' +
@@ -933,7 +950,15 @@ window.tagesblickInit = function () {
   if (D.demo) $('foot').innerHTML = 'Alle Einträge sind Beispieldaten. Ersetze sie in <b>daten.js</b> (siehe ANLEITUNG.md) und setze dort <b>demo</b> auf false. Haken und Anordnung merkt sich die Seite auf diesem Gerät. <button class="btn setsrc" type="button">Datenquelle</button>';
 
   /* Listen */
+  function paintAttrs(id, n) {
+    var box = $('attrs-' + id); if (!box) return;
+    box.innerHTML = E.filter(function (e) { return isAllDay(e) && !e.erledigt && occurs(e, n); }).map(function (e) {
+      return '<span class="attr" data-who="' + esc(e.wer) + '" title="' + esc(e.warum || '') + '"><i style="background:' + esc(col(e.wer)) + '"></i>' + esc(e.titel) +
+        (e.bis ? ' · bis ' + esc(shortDate(diff(e.bis))) : '') + '</span>';
+    }).join('');
+  }
   function renderLists() {
+    paintAttrs('heute', 0); paintAttrs('morgen', 1);
     $('today').innerHTML = todayList.map(function (e) { return item(e, { check: true }); }).join('');
     $('tomorrow').innerHTML = tomorrowList.map(function (e) { return item(e, {}); }).join('');
     $('ahead').innerHTML = aheadList.map(function (e) { return item(e, { count: true }); }).join('');
@@ -962,7 +987,40 @@ window.tagesblickInit = function () {
   (function () {
     var now = new Date(), cur = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
     var nx = todayList.filter(function (e) { return e.zeit && e.zeit >= cur && !isDone(e); })[0];
-    if (nx) { $('next').textContent = 'Nächster Termin ' + nx.zeit; $('next').hidden = false; }
+  })();
+
+  /* Nächster Termin rechts neben der Uhr: wann, und wie lange es noch dauert (ab mehr als 24 Stunden nur „24+“). */
+  (function () {
+    var box = $('nextWhen'); if (!box) return;
+    function pad(n) { return String(n).padStart(2, '0'); }
+    function calc() {
+      var now = new Date(), best = null;
+      for (var n = 0; n <= 14 && !best; n++) {
+        E.forEach(function (e) {
+          if (!e.zeit || !/^\d{1,2}:\d\d$/.test(e.zeit) || e.art === 'Hinweis' || e.hinweis || !occurs(e, n)) return;
+          if (n === 0 ? isDone(e) : e.erledigt) return;
+          var p = e.zeit.split(':'), t = day(n); t.setHours(Number(p[0]), Number(p[1]), 0, 0);
+          if (t < now) return;
+          if (!best || t < best.t) best = { t: t, e: e, n: n };
+        });
+      }
+      return best;
+    }
+    function paint() {
+      var b = calc(), now = new Date();
+      if (!b) { box.hidden = true; return; }
+      var mins = Math.ceil((b.t - now) / 60000), left;
+      if (mins > 1440) left = '24+';
+      else { var h = Math.floor(mins / 60), m = mins % 60; left = 'in ' + (h ? h + ' h ' : '') + m + ' min'; }
+      var dl = b.n === 0 ? 'Heute' : b.n === 1 ? 'Morgen' : fmt(b.n, { weekday: 'short', day: 'numeric', month: 'numeric' });
+      var z = b.e.zeit.split(':');
+      box.innerHTML = '<span class="nw-l">Nächster Termin · ' + esc(dl) + ' ' + pad(Number(z[0])) + ':' + z[1] + '</span><span class="nw-t">' + esc(left) + '</span>';
+      box.title = b.e.titel || '';
+      box.hidden = false;
+    }
+    paint();
+    if (window.TB_NWT) clearInterval(window.TB_NWT);
+    window.TB_NWT = setInterval(paint, 15000);
   })();
 
   /* Zeitleiste: 14 Tage von links nach rechts, heute ganz links. */
