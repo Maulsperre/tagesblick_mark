@@ -243,9 +243,10 @@ input[type="checkbox"]:checked::after { content: ""; width: 10px; height: 5px; b
 .radar .halo { fill: none; stroke: var(--c); stroke-width: 1; opacity: .55; }
 .radar .lbl { fill: var(--ink); font-family: var(--display); font-weight: 600; font-size: 13px; }
 .radar .sub { fill: var(--muted); font-family: var(--mono); font-size: 10px; }
+.radar .leader { stroke: var(--c); stroke-width: 1; opacity: .55; }
 .radar .wedge { fill: var(--accent); opacity: .07; }
 .radar .edge { stroke: var(--accent); stroke-width: 1.5; opacity: .55; }
-.radar .sweep { transform-box: view-box; transform-origin: 230px 180px; animation: sweep 14s linear infinite; }
+.radar .sweep { transform-box: view-box; transform-origin: 230px 225px; animation: sweep 14s linear infinite; }
 @keyframes sweep { to { transform: rotate(360deg); } }
 .legend { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 18px; font-size: 13px; color: var(--muted); }
 
@@ -1036,23 +1037,77 @@ window.tagesblickInit = function () {
   $('timeline').innerHTML = tl;
 
   /* Radar als zweite Ansicht: Mitte ist heute, der äußere Ring liegt 14 Tage entfernt. */
-  var CX = 230, CY = 180;
-  function rad(n) { return 22 + n / 14 * 138; }
-  function blip(e, n, sub, idx) {
-    var a = e.winkel != null ? e.winkel : (idx * 67 + 25) % 360;
-    var t = a * Math.PI / 180, r = rad(n);
-    var x = CX + r * Math.cos(t), y = CY + r * Math.sin(t);
-    var left = Math.cos(t) < 0, tx = x + (left ? -13 : 13);
+  var CX = 230, CY = 225, RMAX = 160, R0 = 22;
+  function rad(n) { return R0 + n / 14 * (RMAX - R0); }
+  /* Beschriftung läuft schräg entlang des Strahls vom Zentrum durch den Punkt nach außen, so gehört der Text eindeutig zum Punkt. Links ist sie gedreht, damit sie nie auf dem Kopf steht. */
+  function pieces(w) { /* Wort an Bindestrichen in Teile zerlegen, der Bindestrich bleibt am vorderen Teil */
+    var out = [], c = '';
+    for (var i = 0; i < w.length; i++) { c += w.charAt(i); if (w.charAt(i) === '-' && i < w.length - 1 && w.charAt(i + 1) !== '-') { out.push(c); c = ''; } }
+    if (c) out.push(c);
+    return out;
+  }
+  function wrapWords(text, per, max) { /* bricht an Leerzeichen und nach Bindestrichen um, ein sehr langes Wort wird notfalls getrennt */
+    var toks = [], lines = [], cur = '';
+    String(text).split(/\s+/).filter(Boolean).forEach(function (w) {
+      pieces(w).forEach(function (p, i) { toks.push({ t: p, glue: i > 0 }); });
+    });
+    toks.forEach(function (k) {
+      var w = k.t, sep = k.glue ? '' : ' ';
+      while (w.length > per) { if (cur) { lines.push(cur); cur = ''; } lines.push(w.slice(0, per - 1) + '-'); w = w.slice(per - 1); }
+      if (!cur) cur = w; else if ((cur + sep + w).length <= per) cur += sep + w; else { lines.push(cur); cur = w; }
+    });
+    if (cur) lines.push(cur);
+    if (lines.length > max) { lines = lines.slice(0, max); lines[max - 1] = lines[max - 1].slice(0, Math.max(1, per - 1)).replace(/[\s-]+$/, '') + '…'; }
+    return lines.length ? lines : [''];
+  }
+  var VB_W = 460, VB_H = 450, EDGE = 18, GAP = 13;
+  /* Winkel der Punkte: Der nächste Termin steht zuerst, dann geht es nach Zeit und Abstand im Uhrzeigersinn weiter, gleichmäßig verteilt.
+     Die Richtungen der Uhrzeiten 11, 12, 1 (oben) und 5, 6, 7 (unten) werden gemieden, weil die Schrift dort schlecht lesbar ist.
+     Sie werden nur genommen, wenn die Punkte sonst zu eng stünden. Ein Winkel aus daten.js (winkel) gilt immer. */
+  function assignAngles(items) {
+    var free = items.map(function (it, i) { return { it: it, i: i }; }).filter(function (o) { return o.it.e.winkel == null; })
+      .sort(function (a, b) { return a.it.n - b.it.n || String(a.it.e.zeit || '99:99').localeCompare(String(b.it.e.zeit || '99:99')) || a.i - b.i; });
+    var out = items.map(function (it) { return it.e.winkel != null ? it.e.winkel : 0; });
+    var N = free.length, ZONE = 80, TOTAL = ZONE * 2;
+    free.forEach(function (o, k) {
+      var a;
+      if (N > 0 && TOTAL / N >= 22) { /* nur rechts (1:30 bis 4:30 Uhr) und links (7:30 bis 10:30 Uhr) */
+        var sPos = (k + .5) * TOTAL / N;
+        a = sPos < ZONE ? -40 + sPos : 140 + (sPos - ZONE);
+      } else a = -45 + (k + .5) * 360 / N; /* Notfall: ganzer Kreis */
+      out[o.i] = ((a % 360) + 360) % 360;
+    });
+    return out;
+  }
+  function blip(e, n, sub, a) {
+    var t = a * Math.PI / 180, r = rad(n), dx = Math.cos(t), dy = Math.sin(t);
+    var x = CX + r * dx, y = CY + r * dy;
     var rec = e.wochentag != null, mark;
     if (rec) {
       var pts = [];
       for (var k = 0; k < 10; k++) { var ang = -Math.PI / 2 + k * Math.PI / 5, rr = k % 2 ? 3.4 : 8; pts.push((x + rr * Math.cos(ang)).toFixed(1) + ',' + (y + rr * Math.sin(ang)).toFixed(1)); }
       mark = '<polygon class="blip star" points="' + pts.join(' ') + '"/>';
     } else mark = '<circle class="blip" cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="4.5"/>';
-    return '<g data-who="' + esc(e.wer) + '" style="--c:' + esc(col(e.wer)) + '"><circle class="halo" cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="9"/>' +
-      mark +
-      '<text class="lbl" x="' + tx.toFixed(1) + '" y="' + (y + 1).toFixed(1) + '" text-anchor="' + (left ? 'end' : 'start') + '">' + esc(e.kurz || e.titel) + '</text>' +
-      '<text class="sub" x="' + tx.toFixed(1) + '" y="' + (y + 14).toFixed(1) + '" text-anchor="' + (left ? 'end' : 'start') + '">' + esc(sub) + '</text></g>';
+    /* Platz entlang des Strahls bis zum Bildrand */
+    var tx = dx > 0 ? (VB_W - EDGE - x) / dx : dx < 0 ? (EDGE - x) / dx : 1e9;
+    var ty = dy > 0 ? (VB_H - EDGE - y) / dy : dy < 0 ? (EDGE - y) / dy : 1e9;
+    var room = Math.max(30, Math.min(tx, ty) - GAP);
+    var text = String(e.kurz || e.titel), size = 13, cw = 7.3, lines = [text];
+    if (text.length * cw > room) { /* passt nicht in eine Zeile: kleiner und auf bis zu zwei Zeilen umbrechen */
+      size = 11.5;
+      lines = wrapWords(text, Math.max(6, Math.floor(room / (cw * size / 13))), 2);
+    }
+    return { e: e, x: x, y: y, deg: a, flip: dx < 0, dx: dx, dy: dy, mark: mark, sub: sub, lines: lines, size: size };
+  }
+  function blipHtml(b) {
+    var px = b.x + b.dx * GAP, py = b.y + b.dy * GAP;
+    var rot = b.flip ? b.deg + 180 : b.deg, anchor = b.flip ? 'end' : 'start', sg = 1;
+    return '<g data-who="' + esc(b.e.wer) + '" style="--c:' + esc(col(b.e.wer)) + '"><circle class="halo" cx="' + b.x.toFixed(1) + '" cy="' + b.y.toFixed(1) + '" r="9"/>' +
+      b.mark +
+      '<g transform="translate(' + px.toFixed(1) + ' ' + py.toFixed(1) + ') rotate(' + rot.toFixed(1) + ')">' +
+      '<text class="lbl" x="0" y="' + (-2 * sg) + '" text-anchor="' + anchor + '" style="font-size:' + b.size.toFixed(1) + 'px">' +
+        b.lines.map(function (l, i) { return '<tspan x="0" dy="' + (i ? sg * 12 : 0) + '">' + esc(l) + '</tspan>'; }).join('') + '</text>' +
+      '<text class="sub" x="0" y="' + (sg * (-2 + (b.lines.length - 1) * 12 + 12)) + '" text-anchor="' + anchor + '">' + esc(b.sub) + '</text></g></g>';
   }
   var radarItems = [];
   /* Wiederkehrendes (Stern) steht nur auf dem Radar, wenn es heute oder morgen ist. */
@@ -1062,16 +1117,60 @@ window.tagesblickInit = function () {
     if (this.n === 0) return false;
     return e.bis ? e.datum && diff(e.datum) === this.n : occurs(e, this.n);
   }, { n: rn }).forEach(function (e) { radarItems.push({ e: e, n: rn }); }); }
-  $('radar').innerHTML = '<svg class="radar" viewBox="0 0 460 360" role="img" aria-label="Radar der nächsten 14 Tage. Je näher ein Punkt an der Mitte liegt, desto früher ist der Termin.">' +
-    '<line class="axis" x1="' + (CX - 160) + '" y1="' + CY + '" x2="' + (CX + 160) + '" y2="' + CY + '"/>' +
-    '<line class="axis" x1="' + CX + '" y1="' + (CY - 160) + '" x2="' + CX + '" y2="' + (CY + 160) + '"/>' +
-    [1, 7, 14].map(function (n) { return '<circle class="ring" cx="' + CX + '" cy="' + CY + '" r="' + rad(n).toFixed(1) + '"/>'; }).join('') +
-    '<g class="sweep"><path class="wedge" d="M' + CX + ' ' + CY + ' L' + (CX + 160) + ' ' + CY + ' A160 160 0 0 1 ' + (CX + 122.6) + ' ' + (CY + 102.8) + ' Z"/>' +
-    '<line class="edge" x1="' + CX + '" y1="' + CY + '" x2="' + (CX + 122.6) + '" y2="' + (CY + 102.8) + '"/></g>' +
-    '<text class="ringlabel" x="' + (CX + 5) + '" y="' + (CY + rad(7) - 5).toFixed(1) + '">7 TAGE</text>' +
-    '<text class="ringlabel" x="' + (CX + 5) + '" y="' + (CY + rad(14) - 5).toFixed(1) + '">14 TAGE</text>' +
-    '<circle class="corering" cx="' + CX + '" cy="' + CY + '" r="10"/><circle class="core" cx="' + CX + '" cy="' + CY + '" r="4"/>' +
-    radarItems.map(function (r, i) { return blip(r.e, r.n, r.n === 0 ? 'heute' : r.n === 1 ? 'morgen' : r.n + ' Tage', i); }).join('') + '</svg>';
+  /* Zweite Beschriftungsart: waagerechte Schrift in Spalten links und rechts, je ein Strich zum Punkt, Zeilenumbruch, keine Überdeckung. */
+  function blipsH(items) {
+    var free = items.map(function (it, i) { return { it: it, i: i }; }).filter(function (o) { return o.it.e.winkel == null; })
+      .sort(function (a, b) { return a.it.n - b.it.n || String(a.it.e.zeit || '99:99').localeCompare(String(b.it.e.zeit || '99:99')) || a.i - b.i; });
+    var ang = items.map(function (it) { return it.e.winkel != null ? it.e.winkel : 0; });
+    free.forEach(function (o, k) { ang[o.i] = ((-90 + (k + .5) * 360 / free.length) % 360 + 360) % 360; });
+    var colR = CX + RMAX + 16, colL = CX - RMAX - 16, size = 15, cw = 8.2, lh = 17;
+    var bl = items.map(function (it, i) {
+      var t = ang[i] * Math.PI / 180, r = rad(it.n), x = CX + r * Math.cos(t), y = CY + r * Math.sin(t);
+      var left = Math.cos(t) < -0.02, text = String(it.e.kurz || it.e.titel);
+      var width = (left ? colL : VB_W - colR) - 10;
+      var longest = Math.max.apply(null, text.split(/\s+/).map(function (w) { return Math.max.apply(null, pieces(w).map(function (q) { return q.length; })); }));
+      var sz = Math.max(11, Math.min(size, size * width / (longest * cw))); /* langes Einzelwort: Schrift etwas kleiner statt mitten im Wort trennen */
+      var lines = wrapWords(text, Math.max(8, Math.floor(width / (cw * sz / size))), 3);
+      var mark, rec = it.e.wochentag != null;
+      if (rec) { var pts = []; for (var k = 0; k < 10; k++) { var an = -Math.PI / 2 + k * Math.PI / 5, rr = k % 2 ? 3.4 : 8; pts.push((x + rr * Math.cos(an)).toFixed(1) + ',' + (y + rr * Math.sin(an)).toFixed(1)); } mark = '<polygon class="blip star" points="' + pts.join(' ') + '"/>'; }
+      else mark = '<circle class="blip" cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="4.5"/>';
+      var sub = it.n === 0 ? 'heute' : it.n === 1 ? 'morgen' : it.n + ' Tage';
+      return { e: it.e, x: x, y: y, left: left, lines: lines, sz: sz, sub: sub, mark: mark, h: lines.length * lh + 14, top: y - (lines.length * lh + 14) / 2 };
+    });
+    [true, false].forEach(function (side) { /* Beschriftungen jeder Seite nach Höhe des Punkts ordnen und so auseinanderschieben, dass nichts überlappt */
+      var g = bl.filter(function (b) { return b.left === side; }).sort(function (a, b) { return a.y - b.y; });
+      var prev = 6;
+      g.forEach(function (b) { if (b.top < prev) b.top = prev; prev = b.top + b.h + 6; });
+      for (var k = g.length - 1, lim = VB_H - 6; k >= 0; k--) { var bot = g[k].top + g[k].h; if (bot > lim) g[k].top -= bot - lim; lim = g[k].top - 6; }
+    });
+    return bl.map(function (b) {
+      var cx = b.left ? colL : colR, ax = b.left ? cx + 5 : cx - 5, ay = b.top + 9, anchor = b.left ? 'end' : 'start';
+      return '<g data-who="' + esc(b.e.wer) + '" style="--c:' + esc(col(b.e.wer)) + '"><line class="leader" x1="' + b.x.toFixed(1) + '" y1="' + b.y.toFixed(1) + '" x2="' + ax.toFixed(1) + '" y2="' + ay.toFixed(1) + '"/>' +
+        '<circle class="halo" cx="' + b.x.toFixed(1) + '" cy="' + b.y.toFixed(1) + '" r="9"/>' + b.mark +
+        '<text class="lbl" x="' + cx + '" y="' + (b.top + 14).toFixed(1) + '" text-anchor="' + anchor + '" style="font-size:' + b.sz.toFixed(1) + 'px">' +
+        b.lines.map(function (l, i) { return '<tspan x="' + cx + '" dy="' + (i ? lh : 0) + '">' + esc(l) + '</tspan>'; }).join('') + '</text>' +
+        '<text class="sub" x="' + cx + '" y="' + (b.top + 14 + (b.lines.length - 1) * lh + 14).toFixed(1) + '" text-anchor="' + anchor + '" style="font-size:11.5px">' + esc(b.sub) + '</text></g>';
+    }).join('');
+  }
+  function drawRadar() {
+    var horiz = (window.TB_LOOK().radar || '') === 'waagerecht';
+    if (horiz) { VB_W = 520; VB_H = 400; CX = 260; CY = 200; RMAX = 118; R0 = 14; }
+    else { VB_W = 460; VB_H = 450; CX = 230; CY = 225; RMAX = 160; R0 = 22; }
+    var k1 = RMAX * 0.766, k2 = RMAX * 0.6428;
+    $('radar').innerHTML = '<svg class="radar" viewBox="0 0 ' + VB_W + ' ' + VB_H + '" role="img" aria-label="Radar der nächsten 14 Tage. Je näher ein Punkt an der Mitte liegt, desto früher ist der Termin.">' +
+      '<line class="axis" x1="' + (CX - RMAX) + '" y1="' + CY + '" x2="' + (CX + RMAX) + '" y2="' + CY + '"/>' +
+      '<line class="axis" x1="' + CX + '" y1="' + (CY - RMAX) + '" x2="' + CX + '" y2="' + (CY + RMAX) + '"/>' +
+      [1, 7, 14].map(function (n) { return '<circle class="ring" cx="' + CX + '" cy="' + CY + '" r="' + rad(n).toFixed(1) + '"/>'; }).join('') +
+      '<g class="sweep" style="transform-origin:' + CX + 'px ' + CY + 'px"><path class="wedge" d="M' + CX + ' ' + CY + ' L' + (CX + RMAX) + ' ' + CY + ' A' + RMAX + ' ' + RMAX + ' 0 0 1 ' + (CX + k1).toFixed(1) + ' ' + (CY + k2).toFixed(1) + ' Z"/>' +
+      '<line class="edge" x1="' + CX + '" y1="' + CY + '" x2="' + (CX + k1).toFixed(1) + '" y2="' + (CY + k2).toFixed(1) + '"/></g>' +
+      '<text class="ringlabel" x="' + (CX + 5) + '" y="' + (CY + rad(7) - 5).toFixed(1) + '">7 TAGE</text>' +
+      '<text class="ringlabel" x="' + (CX + 5) + '" y="' + (CY + rad(14) - 5).toFixed(1) + '">14 TAGE</text>' +
+      '<circle class="corering" cx="' + CX + '" cy="' + CY + '" r="10"/><circle class="core" cx="' + CX + '" cy="' + CY + '" r="4"/>' +
+      (horiz ? blipsH(radarItems) : (function () { var ang = assignAngles(radarItems); return radarItems.map(function (r, i) { return blipHtml(blip(r.e, r.n, r.n === 0 ? 'heute' : r.n === 1 ? 'morgen' : r.n + ' Tage', ang[i])); }).join(''); })()) + '</svg>';
+  }
+  drawRadar();
+  if (window.TB_RADARWATCH) window.removeEventListener('tblook', window.TB_RADARWATCH);
+  window.TB_RADARWATCH = drawRadar; window.addEventListener('tblook', drawRadar);
   $('legend').innerHTML = Object.keys(P).map(who).join('') + '<span class="who"><span style="color:var(--bronze,#C9A25F)">★</span>wiederkehrend</span>';
 
   /* Posteingang: nur Anzeige. Für eine Antwort kopierst du einen fertigen Auftrag in Claude oder ChatGPT. */
@@ -1313,6 +1412,11 @@ window.tagesblickInit = function () {
     </select></div>
   <div class="sec"><div class="row2"><span class="lab" style="margin:0">Schriftgröße</span><b id="sizeVal">100%</b></div>
     <input type="range" id="sizeRng" min="80" max="140" step="5" value="100" aria-label="Schriftgröße"></div>
+  <div class="sec"><span class="lab">Radar-Beschriftung</span>
+    <select id="radarSel">
+      <option value="">Schräg entlang der Linie zum Zentrum</option>
+      <option value="waagerecht">Waagerecht, mit Strich zum Punkt</option>
+    </select></div>
   <div class="sec row2"><span class="lab" style="margin:0">Gilt nur für dieses Gerät.</span><button class="btn" type="button" id="lookReset">Zurücksetzen</button></div>
 </div>
 <script>
@@ -1339,6 +1443,7 @@ window.tagesblickInit = function () {
         x[3].map(function (c) { return '<i style="background:' + c + '"></i>'; }).join('') + '</span><b>' + x[1] + '</b><small>' + x[2] + '</small></button>';
     }).join('');
     $('fontSel').value = cur.font || '';
+    $('radarSel').value = cur.radar || '';
     $('sizeRng').value = cur.size || 100;
     $('sizeVal').textContent = (cur.size || 100) + '%';
   }
@@ -1353,8 +1458,9 @@ window.tagesblickInit = function () {
   document.addEventListener('click', function (ev) { if (!$('settings').hidden && !ev.target.closest('#settings')) toggle(false); });
   $('themes').addEventListener('click', function (ev) { var b = ev.target.closest('button[data-t]'); if (!b) return; window.TB_LOOK({ theme: b.getAttribute('data-t') }); paint(); });
   $('fontSel').addEventListener('change', function () { window.TB_LOOK({ font: $('fontSel').value }); });
+  $('radarSel').addEventListener('change', function () { window.TB_LOOK({ radar: $('radarSel').value }); window.dispatchEvent(new Event('tblook')); });
   $('sizeRng').addEventListener('input', function () { window.TB_LOOK({ size: Number($('sizeRng').value) }); $('sizeVal').textContent = $('sizeRng').value + '%'; });
-  $('lookReset').addEventListener('click', function () { window.TB_LOOK({ theme: 'kupfer', font: '', size: 100 }); paint(); });
+  $('lookReset').addEventListener('click', function () { window.TB_LOOK({ theme: 'kupfer', font: '', size: 100, radar: '' }); window.dispatchEvent(new Event('tblook')); paint(); });
 })();
 </script>
 <script>

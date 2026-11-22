@@ -16,7 +16,7 @@ self.addEventListener('fetch', function (e) {
   var u = new URL(r.url);
   if (u.origin !== location.origin) return; /* Microsoft, OneDrive und CDN gehen immer direkt ins Netz */
   e.respondWith(
-    fetch(r).then(function (res) {
+    fetch(r, { cache: 'no-cache' }).then(function (res) {
       if (res && res.ok) { var kopie = res.clone(); caches.open(NAME).then(function (c) { c.put(r, kopie); }); }
       return res;
     }).catch(function () {
