@@ -2035,7 +2035,21 @@ window.tagesblickInit = function () {
         cache: { cacheLocation: 'localStorage' }
       });
       var ordner = ORDNER[0], account = null;
-      function login() { app.loginRedirect({ scopes: SCOPES }); }
+      /* Ein abgebrochener Anmeldeversuch (zum Beispiel Zurück-Taste auf der Microsoft-Seite) hinterlässt eine Sperre "Anmeldung läuft".
+         Dann passiert beim nächsten Tippen auf Anmelden nichts. Darum die Sperre vorher entfernen und Fehler sichtbar machen. */
+      function clearStale() {
+        [localStorage, sessionStorage].forEach(function (st) {
+          try { Object.keys(st).forEach(function (k) { if (/interaction\.status|request\.(params|state|origin)/i.test(k)) st.removeItem(k); }); } catch (e) {}
+        });
+      }
+      function login() {
+        clearStale();
+        var p; try { p = app.loginRedirect({ scopes: SCOPES }); } catch (e) { p = Promise.reject(e); }
+        if (p && p.catch) p.catch(function (e) {
+          clearStale();
+          note('Die Anmeldung konnte nicht gestartet werden (' + ((e && (e.errorCode || e.message)) || 'Fehler') + '). Bitte noch einmal tippen.', 'Bei Microsoft anmelden', login);
+        });
+      }
       function token() { return app.acquireTokenSilent({ scopes: SCOPES, account: account }).then(function (t) { return t.accessToken; }); }
       function url(name) { return 'https://graph.microsoft.com/v1.0/me/drive/root:/' + ordner + name + ':/content'; }
       function lade(tok, i) {
