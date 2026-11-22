@@ -1126,42 +1126,91 @@ window.tagesblickInit = function () {
   }, { n: rn }).forEach(function (e) { radarItems.push({ e: e, n: rn }); }); }
   /* Zweite Beschriftungsart: waagerechte Schrift in Spalten links und rechts, je ein Strich zum Punkt, Zeilenumbruch, keine Überdeckung. */
   function blipsH(items) {
+    /* Waagerechte Beschriftung direkt am Punkt. Wenn sie dort mit etwas überlappt, wird sie verschoben, und zwar entweder rund um den Punkt (gleicher Abstand zum Punkt)
+       oder auf dem Kreis des Punkts weiter (gleicher Abstand zur Mitte, dann mit kurzem Strich zum Punkt). */
     var free = items.map(function (it, i) { return { it: it, i: i }; }).filter(function (o) { return o.it.e.winkel == null; })
       .sort(function (a, b) { return a.it.n - b.it.n || String(a.it.e.zeit || '99:99').localeCompare(String(b.it.e.zeit || '99:99')) || a.i - b.i; });
     var ang = items.map(function (it) { return it.e.winkel != null ? it.e.winkel : 0; });
     free.forEach(function (o, k) { ang[o.i] = ((-90 + (k + .5) * 360 / free.length) % 360 + 360) % 360; });
-    var colR = CX + RMAX + 16, colL = CX - RMAX - 16, size = 15, cw = 8.2, lh = 17;
+    var size = 14, lh = 16, PER = 17, M = 4, D = 9;
+    var NS = 'http://www.w3.org/2000/svg', ms = document.createElementNS(NS, 'svg');
+    ms.setAttribute('class', 'radar'); ms.setAttribute('style', 'position:absolute;visibility:hidden;width:0;height:0;overflow:hidden');
+    var mt = document.createElementNS(NS, 'text'); ms.appendChild(mt); $('radar').appendChild(ms);
+    function measure(txt, cls, px) { mt.setAttribute('class', cls); mt.style.fontSize = px + 'px'; mt.textContent = txt; return mt.getComputedTextLength(); }
     var bl = items.map(function (it, i) {
       var t = ang[i] * Math.PI / 180, r = rad(it.n), x = CX + r * Math.cos(t), y = CY + r * Math.sin(t);
-      var left = Math.cos(t) < -0.02, text = String(it.e.kurz || it.e.titel);
-      var width = (left ? colL : VB_W - colR) - 10;
-      var longest = Math.max.apply(null, text.split(/\s+/).map(function (w) { return Math.max.apply(null, pieces(w).map(function (q) { return q.length; })); }));
-      var sz = Math.max(11, Math.min(size, size * width / (longest * cw))); /* langes Einzelwort: Schrift etwas kleiner statt mitten im Wort trennen */
-      var lines = wrapWords(text, Math.max(8, Math.floor(width / (cw * sz / size))), 3);
-      var mark, rec = it.e.wochentag != null;
+      var text = String(it.e.kurz || it.e.titel), mark, rec = it.e.wochentag != null;
       if (rec) { var pts = []; for (var k = 0; k < 10; k++) { var an = -Math.PI / 2 + k * Math.PI / 5, rr = k % 2 ? 3.4 : 8; pts.push((x + rr * Math.cos(an)).toFixed(1) + ',' + (y + rr * Math.sin(an)).toFixed(1)); } mark = '<polygon class="blip star" points="' + pts.join(' ') + '"/>'; }
       else mark = '<circle class="blip" cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="4.5"/>';
+      var longest = Math.max.apply(null, text.split(/\s+/).map(function (w) { return Math.max.apply(null, pieces(w).map(function (q) { return q.length; })); }));
+      var sz = Math.max(11, Math.min(size, size * PER / longest)); /* langes Einzelwort: Schrift etwas kleiner */
+      var lines = wrapWords(text, Math.max(8, Math.floor(PER * size / sz)), 3);
       var sub = it.n === 0 ? 'heute' : it.n === 1 ? 'morgen' : it.n + ' Tage';
-      return { e: it.e, x: x, y: y, left: left, lines: lines, sz: sz, sub: sub, mark: mark, h: lines.length * lh + 14, top: y - (lines.length * lh + 14) / 2 };
+      var w = Math.max.apply(null, lines.map(function (l) { return measure(l, 'lbl', sz); }).concat([measure(sub, 'sub', 11)])) + 3;
+      return { e: it.e, x: x, y: y, r: r, a: ang[i], lines: lines, sub: sub, mark: mark, sz: sz, w: w, h: lines.length * lh + 15 };
     });
-    [true, false].forEach(function (side) { /* Beschriftungen jeder Seite nach Höhe des Punkts ordnen und so auseinanderschieben, dass nichts überlappt */
-      var g = bl.filter(function (b) { return b.left === side; }).sort(function (a, b) { return a.y - b.y; });
-      var prev = 6;
-      g.forEach(function (b) { if (b.top < prev) b.top = prev; prev = b.top + b.h + 6; });
-      for (var k = g.length - 1, lim = VB_H - 6; k >= 0; k--) { var bot = g[k].top + g[k].h; if (bot > lim) g[k].top -= bot - lim; lim = g[k].top - 6; }
+    $('radar').removeChild(ms);
+    var placed = [];
+    function rectFor(ax, ay, dir, w, h) {
+      switch (dir) {
+        case 'E': return { x: ax + D, y: ay - h / 2, an: 'start' };
+        case 'W': return { x: ax - D - w, y: ay - h / 2, an: 'end' };
+        case 'N': return { x: ax - w / 2, y: ay - D - h, an: 'middle' };
+        case 'S': return { x: ax - w / 2, y: ay + D, an: 'middle' };
+        case 'NE': return { x: ax + 7, y: ay - 7 - h, an: 'start' };
+        case 'NW': return { x: ax - 7 - w, y: ay - 7 - h, an: 'end' };
+        case 'SE': return { x: ax + 7, y: ay + 7, an: 'start' };
+        default: return { x: ax - 7 - w, y: ay + 7, an: 'end' };
+      }
+    }
+    function hit(a, b) { return a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h; }
+    function ok(rc, b) {
+      if (rc.x < M || rc.y < M || rc.x + b.w > VB_W - M || rc.y + b.h > VB_H - M) return false;
+      var box = { x: rc.x - 5, y: rc.y - 5, w: b.w + 10, h: b.h + 10 };
+      for (var i = 0; i < placed.length; i++) if (hit(box, placed[i])) return false;
+      for (var j = 0; j < bl.length; j++) if (bl[j] !== b && hit(box, { x: bl[j].x - 11, y: bl[j].y - 11, w: 22, h: 22 })) return false;
+      return true;
+    }
+    bl.forEach(function (b) {
+      var right = Math.cos(b.a * Math.PI / 180) >= 0, cand = [];
+      cand.push({ ax: b.x, ay: b.y, dir: right ? 'E' : 'W', line: false });
+      (right ? ['NE', 'SE', 'N', 'S', 'NW', 'SW', 'W'] : ['NW', 'SW', 'N', 'S', 'NE', 'SE', 'E']).forEach(function (d) { cand.push({ ax: b.x, ay: b.y, dir: d, line: false }); });
+      for (var k = 1; k <= 36; k++) [1, -1].forEach(function (sg) {
+        var an = (b.a + sg * k * 5) * Math.PI / 180, ax = CX + b.r * Math.cos(an), ay = CY + b.r * Math.sin(an);
+        cand.push({ ax: ax, ay: ay, dir: Math.cos(an) >= 0 ? 'E' : 'W', line: true });
+      });
+      /* Notlösung, wenn es im Kern des Radars zu eng ist: nach außen entlang der Linie vom Zentrum, immer mit Strich zum Punkt */
+      for (var dd = 24; dd <= 170; dd += 12) [0, 12, -12, 24, -24, 40, -40].forEach(function (da) {
+        var an2 = (b.a + da) * Math.PI / 180, ax2 = CX + (b.r + dd) * Math.cos(an2), ay2 = CY + (b.r + dd) * Math.sin(an2);
+        cand.push({ ax: ax2, ay: ay2, dir: Math.cos(an2) >= 0 ? 'E' : 'W', line: true });
+      });
+      var pick = null;
+      for (var c = 0; c < cand.length && !pick; c++) {
+        var rc = rectFor(cand[c].ax, cand[c].ay, cand[c].dir, b.w, b.h);
+        if (ok(rc, b)) pick = { c: cand[c], rc: rc };
+      }
+      if (!pick) { var rc0 = rectFor(b.x, b.y, cand[0].dir, b.w, b.h); pick = { c: cand[0], rc: rc0 }; }
+      b.pick = pick;
+      placed.push({ x: pick.rc.x, y: pick.rc.y, w: b.w, h: b.h });
     });
     return bl.map(function (b) {
-      var cx = b.left ? colL : colR, ax = b.left ? cx + 5 : cx - 5, ay = b.top + 9, anchor = b.left ? 'end' : 'start';
-      return '<g data-who="' + esc(b.e.wer) + '" style="--c:' + esc(col(b.e.wer)) + '"><line class="leader" x1="' + b.x.toFixed(1) + '" y1="' + b.y.toFixed(1) + '" x2="' + ax.toFixed(1) + '" y2="' + ay.toFixed(1) + '"/>' +
+      var rc = b.pick.rc, c = b.pick.c;
+      var tx = rc.an === 'start' ? rc.x : rc.an === 'end' ? rc.x + b.w : rc.x + b.w / 2;
+      var line = '';
+      if (c.line) {
+        var lx = rc.an === 'start' ? rc.x - 2 : rc.an === 'end' ? rc.x + b.w + 2 : tx, ly = rc.y + 8;
+        line = '<line class="leader" x1="' + b.x.toFixed(1) + '" y1="' + b.y.toFixed(1) + '" x2="' + lx.toFixed(1) + '" y2="' + ly.toFixed(1) + '"/>';
+      }
+      return '<g data-who="' + esc(b.e.wer) + '" style="--c:' + esc(col(b.e.wer)) + '">' + line +
         '<circle class="halo" cx="' + b.x.toFixed(1) + '" cy="' + b.y.toFixed(1) + '" r="9"/>' + b.mark +
-        '<text class="lbl" x="' + cx + '" y="' + (b.top + 14).toFixed(1) + '" text-anchor="' + anchor + '" style="font-size:' + b.sz.toFixed(1) + 'px">' +
-        b.lines.map(function (l, i) { return '<tspan x="' + cx + '" dy="' + (i ? lh : 0) + '">' + esc(l) + '</tspan>'; }).join('') + '</text>' +
-        '<text class="sub" x="' + cx + '" y="' + (b.top + 14 + (b.lines.length - 1) * lh + 14).toFixed(1) + '" text-anchor="' + anchor + '" style="font-size:11.5px">' + esc(b.sub) + '</text></g>';
+        '<text class="lbl" x="' + tx.toFixed(1) + '" y="' + (rc.y + b.sz).toFixed(1) + '" text-anchor="' + rc.an + '" style="font-size:' + b.sz.toFixed(1) + 'px">' +
+        b.lines.map(function (l, i) { return '<tspan x="' + tx.toFixed(1) + '" dy="' + (i ? lh : 0) + '">' + esc(l) + '</tspan>'; }).join('') + '</text>' +
+        '<text class="sub" x="' + tx.toFixed(1) + '" y="' + (rc.y + b.sz + (b.lines.length - 1) * lh + 13).toFixed(1) + '" text-anchor="' + rc.an + '" style="font-size:11px">' + esc(b.sub) + '</text></g>';
     }).join('');
   }
   function drawRadar() {
     var horiz = (window.TB_LOOK().radar || '') === 'waagerecht';
-    if (horiz) { VB_W = 520; VB_H = 400; CX = 260; CY = 200; RMAX = 118; R0 = 14; }
+    if (horiz) { VB_W = 520; VB_H = 400; CX = 260; CY = 200; RMAX = 140; R0 = 14; }
     else { VB_W = 460; VB_H = 450; CX = 230; CY = 225; RMAX = 160; R0 = 22; }
     var k1 = RMAX * 0.766, k2 = RMAX * 0.6428;
     $('radar').innerHTML = '<svg class="radar" viewBox="0 0 ' + VB_W + ' ' + VB_H + '" role="img" aria-label="Radar der nächsten 14 Tage. Je näher ein Punkt an der Mitte liegt, desto früher ist der Termin.">' +
@@ -1176,6 +1225,7 @@ window.tagesblickInit = function () {
       (horiz ? blipsH(radarItems) : (function () { var ang = assignAngles(radarItems); return radarItems.map(function (r, i) { return blipHtml(blip(r.e, r.n, r.n === 0 ? 'heute' : r.n === 1 ? 'morgen' : r.n + ' Tage', ang[i])); }).join(''); })()) + '</svg>';
   }
   drawRadar();
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { if ((window.TB_LOOK().radar || '') === 'waagerecht') drawRadar(); });
   if (window.TB_RADARWATCH) window.removeEventListener('tblook', window.TB_RADARWATCH);
   window.TB_RADARWATCH = drawRadar; window.addEventListener('tblook', drawRadar);
   $('legend').innerHTML = Object.keys(P).map(who).join('') + '<span class="who"><span style="color:var(--bronze,#C9A25F)">★</span>wiederkehrend</span>';
