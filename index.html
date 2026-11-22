@@ -127,12 +127,17 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent-2); 
 /* Kopf */
 .hud { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 14px 24px; }
 .brand { position: relative; }
-.sbtools { display: flex; gap: 6px; flex: none; order: -1; width: 100%; justify-content: flex-end; }
+.menu { position: fixed; z-index: 60; min-width: 230px; max-width: calc(100vw - 16px); padding: 6px; border: 1px solid var(--accent); border-radius: 12px; background: var(--bg); color: var(--ink); box-shadow: 0 18px 60px rgba(0,0,0,.45), 0 0 30px var(--glow); font-family: var(--body); }
+.menu .mi { display: flex; align-items: center; gap: 12px; width: 100%; padding: 10px 12px; border: 0; border-radius: 8px; background: transparent; color: var(--ink); font: inherit; font-size: 14px; text-align: left; cursor: pointer; }
+.menu .mi svg { flex: none; color: var(--accent); }
+.menu .mi:hover, .menu .mi:focus-visible { background: var(--panel-2); }
+.menu .mi:disabled { color: var(--muted); opacity: .45; cursor: default; background: transparent; }
+.menu .mi:disabled svg { color: var(--muted); }
+.menu .msep { border: 0; border-top: 1px solid var(--line); margin: 6px 4px; }
+.editing #edit { color: var(--accent); font-weight: 600; }
+html.handy .menu .mi { padding: 14px; font-size: 16px; }
+.sbtools { position: relative; display: flex; gap: 6px; flex: none; order: -1; width: 100%; justify-content: flex-end; }
 @media (max-width: 1639px) { .sbtools { order: 0; width: auto; margin-left: auto; } }
-.sbtools .editbtn { flex: none; width: 34px; height: 34px; padding: 0; gap: 0; justify-content: center; border-width: 1px; border-color: var(--line); color: var(--muted); }
-.sbtools .editbtn:hover, .sbtools .editbtn:focus-visible { border-color: var(--accent); color: var(--accent); background: transparent; box-shadow: none; }
-.editing .sbtools .editbtn { background: var(--accent); border-color: var(--accent); color: var(--bg); box-shadow: 0 0 20px var(--glow); }
-html.handy .sbtools .editbtn { width: 42px; height: 42px; }
 .reload { flex: none; width: 34px; height: 34px; display: grid; place-items: center; padding: 0; border: 1px solid var(--line); border-radius: 50%; background: transparent; color: var(--muted); cursor: pointer; }
 .reload:hover, .reload:focus-visible { color: var(--accent); border-color: var(--accent); }
 .reload:active svg { transform: rotate(180deg); }
@@ -550,9 +555,6 @@ html[data-theme="fcbayern"] .brand svg circle[fill="var(--accent)"], html[data-t
 html[data-theme="fcbayern"] .nav button { color:#fff; border-color:rgba(255,255,255,.35); }
 html[data-theme="fcbayern"] .nav button:hover { background:rgba(255,255,255,.16); color:#fff; }
 html[data-theme="fcbayern"] .nav button[aria-pressed="true"] { background:#fff; color:#DC052D; border-color:#fff; box-shadow:none; }
-html[data-theme="fcbayern"] .sbtools .editbtn, html[data-theme="fcbayern"] .reload { color:#fff; border-color:rgba(255,255,255,.6); }
-html[data-theme="fcbayern"] .sbtools .editbtn:hover, html[data-theme="fcbayern"] .reload:hover { background:rgba(255,255,255,.18); color:#fff; border-color:#fff; }
-html[data-theme="fcbayern"].editing .sbtools .editbtn, html[data-theme="fcbayern"] .editing .sbtools .editbtn { background:#fff; color:#DC052D; border-color:#fff; box-shadow:none; }
 html[data-theme="fcbayern"] .mhead { background:#DC052D; border-bottom:0; }
 html[data-theme="fcbayern"] h2 { color:#fff; }
 html[data-theme="fcbayern"] .mhead .note { color:rgba(255,255,255,.88); }
@@ -640,13 +642,19 @@ html[data-theme="ueberraschung"] .editbtn:hover, html[data-theme="ueberraschung"
     </div>
     <span class="chip demo" id="demoChip" hidden>Demo · Beispieldaten</span>
     <div class="sbtools">
-      <button class="reload" type="button" id="fsBtn" aria-label="Vollbild" title="Vollbild" aria-pressed="false" hidden><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5"/><path d="M20 9V4h-5"/><path d="M4 15v5h5"/><path d="M20 15v5h-5"/></svg></button>
-      <button class="reload setbtn" type="button" id="setBtn" aria-expanded="false" aria-label="Design" title="Design"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18c1.2 0 2-.8 2-1.8 0-.5-.2-.9-.5-1.3-.3-.4-.5-.8-.5-1.3 0-1 .8-1.8 1.8-1.8H17a4 4 0 0 0 4-4C21 6.6 17 3 12 3Z"/><circle cx="7.5" cy="11.5" r="1" fill="currentColor"/><circle cx="10.5" cy="7.5" r="1" fill="currentColor"/><circle cx="15.5" cy="7.5" r="1" fill="currentColor"/></svg></button>
-      <button class="editbtn" type="button" id="edit" aria-pressed="false" aria-label="Anordnen" title="Anordnen">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9" fill="none"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" fill="none"/></svg>
-          <span id="editLabel" hidden>Anordnen</span>
-        </button>
-        <button class="reload" type="button" id="reloadBtn" aria-label="Seite neu laden" title="Neu laden"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg></button>
+      <button class="reload" type="button" id="menuBtn" aria-haspopup="true" aria-expanded="false" aria-controls="menu" aria-label="Menü" title="Menü"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="5" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="12" cy="19" r="1.6" fill="currentColor"/></svg></button>
+      <div class="menu" id="menu" role="menu" hidden>
+        <button class="mi" type="button" role="menuitem" data-view="zeit"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M3 12h12"/><path d="M3 18h8"/></svg><span>Zeitleiste</span></button>
+        <button class="mi" type="button" role="menuitem" data-view="radar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1" fill="currentColor"/></svg><span>Radar</span></button>
+        <button class="mi" type="button" role="menuitem" data-view="radarstrich"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="12" r="6"/><circle cx="9" cy="12" r="1" fill="currentColor"/><path d="M13 8l4-3h4"/><path d="M14 15l3 3h4"/></svg><span>Radar mit Strich</span></button>
+        <hr class="msep">
+        <button class="mi" type="button" role="menuitem" id="edit" aria-pressed="false"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg><span id="editLabel">Anordnen</span></button>
+        <button class="mi setbtn" type="button" role="menuitem" id="setBtn" aria-expanded="false"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18c1.2 0 2-.8 2-1.8 0-.5-.2-.9-.5-1.3-.3-.4-.5-.8-.5-1.3 0-1 .8-1.8 1.8-1.8H17a4 4 0 0 0 4-4C21 6.6 17 3 12 3Z"/><circle cx="7.5" cy="11.5" r="1" fill="currentColor"/><circle cx="10.5" cy="7.5" r="1" fill="currentColor"/><circle cx="15.5" cy="7.5" r="1" fill="currentColor"/></svg><span>Design</span></button>
+        <button class="mi" type="button" role="menuitem" id="handyBtn" aria-pressed="false"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2.5" width="10" height="19" rx="2"/><path d="M11 18.5h2"/></svg><span id="handyLbl">Handy-Ansicht</span></button>
+        <button class="mi" type="button" role="menuitem" id="fsBtn" aria-pressed="false" hidden><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5"/><path d="M20 9V4h-5"/><path d="M4 15v5h5"/><path d="M20 15v5h-5"/></svg><span class="fslab">Vollbild</span></button>
+        <button class="mi" type="button" role="menuitem" id="reloadBtn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg><span>Neu laden</span></button>
+        <button class="mi" type="button" role="menuitem" id="menuHelp"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.6 2.2c-.7.4-1.1 1-1.1 1.8"/><circle cx="12" cy="17" r="1" fill="currentColor"/></svg><span>Hilfe</span></button>
+      </div>
     </div>
   </aside>
 
@@ -660,9 +668,8 @@ html[data-theme="ueberraschung"] .editbtn:hover, html[data-theme="ueberraschung"
         <a class="chip link" id="lKal" href="https://calendar.google.com/" target="_blank" rel="noopener">Kalender ↗</a>
         <button class="chip link shopbtn" type="button" id="shopBtn">🛒 Einkauf</button>
         <button class="chip link shopbtn" type="button" id="ideenBtn">💡 Ideen</button>
-        <button class="chip link" type="button" id="handyBtn" aria-pressed="false">📱 Handy</button>
         <button class="chip link setsrc" type="button" id="srcBtn">Datenquelle</button>
-        <span class="seg" role="group" aria-label="Ansicht der nächsten 14 Tage">
+        <span class="seg" role="group" aria-label="Ansicht der nächsten 14 Tage" hidden>
           <button type="button" id="vZeit" aria-pressed="true">Zeitleiste</button>
           <button type="button" id="vRadar" aria-pressed="false">Radar</button>
         </span>
@@ -699,7 +706,7 @@ html[data-theme="ueberraschung"] .editbtn:hover, html[data-theme="ueberraschung"
             <button class="btn zr-send" type="submit" id="zrSend">Senden</button>
             <button class="btn zr-mic" type="button" id="zrMic" hidden aria-pressed="false" title="Diktieren">🎤 Diktieren</button>
             <button class="btn" type="button" id="zrFoto" title="Foto aufnehmen oder Bild/PDF anhängen">📷 Foto</button>
-            <span class="mail-report-bar zr-helpwrap"><button class="btn" type="button" id="zrHelpBtn">Hilfe</button><span class="mail-report-tip" id="zrHelpTip" role="tooltip">
+            <span class="mail-report-bar zr-helpwrap" hidden><button class="btn" type="button" id="zrHelpBtn">Hilfe</button><span class="mail-report-tip" id="zrHelpTip" role="tooltip">
               <b>Schnellhilfe</b>
               <p>Schreib in ganzen Sätzen, was ich tun soll: Wer, was, wann. Ich hole Zurufe stündlich ab, trage sie ein und antworte hier darunter.</p>
               <ul><li>„Pauline hat am 5.12. um 15 Uhr Zahnarzt.“</li><li>„Erinnere mich morgen um 8 an die Rücksendung.“</li><li>„Bei Jonas will ich mich melden.“</li><li>📷 Foto von Rechnung oder Kalender, dazu „Bitte eintragen.“</li></ul>
@@ -1471,7 +1478,7 @@ window.tagesblickInit = function () {
   var req = el.requestFullscreen || el.webkitRequestFullscreen;
   if (!b || app || !req) return;
   function isFs() { return !!(d.fullscreenElement || d.webkitFullscreenElement); }
-  function label() { var f = isFs(); b.title = f ? 'Vollbild beenden' : 'Vollbild'; b.setAttribute('aria-label', b.title); b.setAttribute('aria-pressed', String(f)); }
+  function label() { var f = isFs(), l = b.querySelector('.fslab'); b.title = f ? 'Vollbild beenden' : 'Vollbild'; if (l) l.textContent = b.title; b.setAttribute('aria-pressed', String(f)); }
   b.hidden = false;
   b.addEventListener('click', function () {
     if (isFs()) (d.exitFullscreen || d.webkitExitFullscreen).call(d);
@@ -1890,7 +1897,7 @@ window.tagesblickInit = function () {
   var K = 'tagesblick-handy', b = document.getElementById('handyBtn'), on;
   try { on = localStorage.getItem(K); } catch (e) {}
   on = on === null || on === undefined ? !!(window.matchMedia && matchMedia('(pointer: coarse) and (max-width: 820px)').matches) : on === '1';
-  function set(v) { on = v; document.documentElement.classList.toggle('handy', v); b.setAttribute('aria-pressed', String(v)); b.textContent = v ? '🖥 Normal' : '📱 Handy'; try { localStorage.setItem(K, v ? '1' : '0'); } catch (e) {} }
+  function set(v) { on = v; document.documentElement.classList.toggle('handy', v); b.setAttribute('aria-pressed', String(v)); var hl = document.getElementById('handyLbl'); if (hl) hl.textContent = v ? 'Normale Ansicht' : 'Handy-Ansicht'; try { localStorage.setItem(K, v ? '1' : '0'); } catch (e) {} }
   set(on);
   b.addEventListener('click', function () { set(!on); });
 })();
@@ -2266,6 +2273,46 @@ window.tagesblickInit = function () {
   var y0 = null;
   var rb = document.getElementById('reloadBtn');
   if (rb) rb.addEventListener('click', function () { location.reload(); });
+  var mh = document.getElementById('menuHelp'), zh = document.getElementById('zrHelpBtn');
+  if (mh && zh) mh.addEventListener('click', function () { zh.click(); });
+  /* Drei-Punkte-Menü: Ansicht (Zeitleiste, Radar, Radar mit Strich), Anordnen, Design, Vollbild, Neu laden. Die gewählte Ansicht ist ausgegraut. */
+  (function () {
+    var mb = document.getElementById('menuBtn'), menu = document.getElementById('menu');
+    if (!mb || !menu) return;
+    function radarShown() { var b = document.getElementById('vRadar'); return !!b && b.getAttribute('aria-pressed') === 'true'; }
+    function sync() {
+      var rad = radarShown(), mode = (window.TB_LOOK && window.TB_LOOK().radar) || '';
+      [].forEach.call(menu.querySelectorAll('[data-view]'), function (b) {
+        var v = b.getAttribute('data-view'), on = v === 'zeit' ? !rad : v === 'radar' ? (rad && mode === '') : (rad && mode === 'waagerecht');
+        b.disabled = on; b.setAttribute('aria-current', on ? 'true' : 'false');
+      });
+    }
+    function place() {
+      var r = mb.getBoundingClientRect(), w = menu.offsetWidth;
+      menu.style.top = (r.bottom + 6) + 'px';
+      menu.style.left = Math.max(8, Math.min(r.right - w, window.innerWidth - w - 8)) + 'px';
+    }
+    function setOpen(on) { menu.hidden = !on; mb.setAttribute('aria-expanded', String(on)); if (on) { sync(); place(); } }
+    mb.addEventListener('click', function (ev) { ev.stopPropagation(); setOpen(menu.hidden); });
+    menu.addEventListener('click', function (ev) {
+      var v = ev.target.closest && ev.target.closest('[data-view]');
+      if (v && !v.disabled) {
+        var which = v.getAttribute('data-view');
+        if (which === 'zeit') { if (radarShown()) document.getElementById('vZeit').click(); }
+        else {
+          window.TB_LOOK({ radar: which === 'radarstrich' ? 'waagerecht' : '' });
+          window.dispatchEvent(new Event('tblook'));
+          if (!radarShown()) document.getElementById('vRadar').click();
+        }
+      }
+    }, false);
+    menu.addEventListener('click', function () { setOpen(false); }, true);
+    document.addEventListener('click', function (ev) { if (!menu.hidden && !ev.target.closest('#menu')) setOpen(false); });
+    document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape') setOpen(false); });
+    window.addEventListener('resize', function () { setOpen(false); });
+    window.addEventListener('scroll', function () { if (!menu.hidden) setOpen(false); }, true);
+  })();
+
   document.addEventListener('touchstart', function (e) { y0 = e.touches.length === 1 ? e.touches[0].clientY : null; }, { passive: true });
   document.addEventListener('touchmove', function (e) {
     if (navigator.onLine !== false || y0 === null || !e.cancelable) return;
