@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Merk es</title>
+<title>Merk es!</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#110B08">
 <meta name="mobile-web-app-capable" content="yes">
@@ -98,6 +98,9 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent-2); 
 .brand svg { width: 40px; height: 40px; }
 .wm .ers { position: relative; display: inline-block; font-style: normal; }
 .wm .ers i { font-style: normal; }
+.wm i.ex { font-style: normal; margin-left: .04em; }
+html.v-pauline [data-id="post"], html.v-pauline [data-id="melden"], html.v-pauline #shopBtn, html.v-pauline #ideenBtn, html.v-pauline #lGmail, html.v-pauline #lKal,
+html.v-pauline #srcBtn, html.v-pauline #zrFoto, html.v-pauline #menuHelp, html.v-pauline #foot { display: none !important; }
 .wm .ers:last-of-type { margin-left: .14em; }
 .wm .alt { display: inline-block; transform: translateY(.36em) rotate(24deg); transform-origin: 50% 50%; opacity: .38; font-size: .9em; animation: wmfall 1.1s cubic-bezier(.45,0,.9,.55) .5s both; }
 .wm .ers:last-of-type .alt { animation-delay: .85s; }
@@ -634,7 +637,7 @@ html[data-theme="ueberraschung"] .editbtn:hover, html[data-theme="ueberraschung"
   <aside class="sidebar">
     <div class="brand">
       <svg width="36" height="36" viewBox="0 0 36 36" aria-hidden="true"><circle cx="18" cy="18" r="16" fill="none" stroke="var(--line)" stroke-width="1.5"/><circle cx="18" cy="18" r="10" fill="none" stroke="var(--accent-2)" stroke-width="1.5"/><circle cx="18" cy="18" r="3.5" fill="var(--accent)"/><circle cx="29" cy="10" r="2.5" fill="var(--accent-2)"/></svg>
-      <div><b class="wm" aria-label="Merk es">M<span class="ers" aria-hidden="true"><i class="neu">e</i><i class="alt">a</i></span>rk<span class="ers" aria-hidden="true"><i class="neu">e</i><i class="alt">u</i></span>s</b><small>Familien-Leitstand</small></div>
+      <div><b class="wm" aria-label="Merk es!">M<span class="ers" aria-hidden="true"><i class="neu">e</i><i class="alt">a</i></span>rk<span class="ers" aria-hidden="true"><i class="neu">e</i><i class="alt">u</i></span>s<i class="ex" aria-hidden="true">!</i></b><small>Familien-Leitstand</small></div>
     </div>
     <div class="navwrap">
       <span class="navlabel">Anzeigen für</span>
@@ -1452,6 +1455,10 @@ window.tagesblickInit = function () {
   </div>
   <p class="zr-msg" id="folgeMsg" role="status"></p>
 </dialog>
+<dialog class="mail-report folge-pop" id="pauPop" aria-label="Nachrichten von Pauline">
+  <h3><span>💬 Pauline schreibt</span><button class="x" type="button" aria-label="Schließen">✕</button></h3>
+  <div id="pauList"></div>
+</dialog>
 <dialog class="mail-report folge-pop" id="folgePop" aria-label="Antwort auf wichtige E-Mail">
   <h3><span id="folgePopT">📬 Antwort auf eine wichtige E-Mail</span><button class="x" type="button" aria-label="Schließen">✕</button></h3>
   <div id="folgePopList"></div>
@@ -1555,21 +1562,26 @@ window.tagesblickInit = function () {
     var d = new Date(iso); if (isNaN(d)) return '';
     return d.toLocaleDateString('de-DE', { weekday: 'short', day: 'numeric', month: 'numeric' }) + ', ' + d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
   }
-  var STATUS = { offen: ['info', 'wartet auf Claude'], unterwegs: ['bald', 'noch nicht gesendet'], erledigt: ['ruhig', 'erledigt'], rueckfrage: ['akut', 'Rückfrage'] };
+  var V = window.TB_VARIANT === 'pauline';
+  var DONE = { erledigt: 1, uebernommen: 1, abgelehnt: 1 };
+  var STATUS = V ? { offen: ['info', 'gesendet'], unterwegs: ['bald', 'noch nicht gesendet'], vorgeschlagen: ['bald', 'Papa schaut es sich an'], uebernommen: ['ruhig', 'Papa hat es übernommen'], abgelehnt: ['ruhig', 'Papa hat es gesehen'], erledigt: ['ruhig', 'erledigt'], rueckfrage: ['akut', 'Rückfrage'] }
+    : { offen: ['info', 'wartet auf Claude'], unterwegs: ['bald', 'noch nicht gesendet'], erledigt: ['ruhig', 'erledigt'], rueckfrage: ['akut', 'Rückfrage'] };
+  var TXT = V ? { hist: 'Frühere Nachrichten', leer: 'Nichts offen. Schreib oben, was du von Papa brauchst.', ok: 'Gesendet. Papa sieht es sich an.' }
+    : { hist: 'Erledigte Zurufe', leer: 'Nichts offen. Schreib oben, was ich eintragen oder erledigen soll.', ok: 'Gesendet. Claude holt es beim nächsten Lauf ab.' };
   function render() {
     var remote = get(LIST, []), pend = get(PEND, []);
     var ids = {}; remote.forEach(function (m) { ids[m.id] = 1; });
     var all = remote.concat(pend.filter(function (m) { return !ids[m.id]; }).map(function (m) { var c = Object.assign({}, m); c.status = 'unterwegs'; return c; }));
     all.sort(function (a, b) { return String(b.zeit).localeCompare(String(a.zeit)); });
-    var offen = all.filter(function (m) { return m.status !== 'erledigt'; }).length;
+    var offen = all.filter(function (m) { return !DONE[m.status]; }).length;
     var rf = all.filter(function (m) { return m.status === 'rueckfrage'; }).length;
     if ($('zrCount')) $('zrCount').textContent = rf ? rf + ' Rückfrage' + (rf > 1 ? 'n' : '') : offen ? offen + ' offen' : '';
     /* Offene Zurufe bleiben immer sichtbar, bis Claude sie erledigt hat. Erledigte stehen im Verlaufsfenster. */
-    var done = all.filter(function (m) { return m.status === 'erledigt'; });
-    all = all.filter(function (m) { return m.status !== 'erledigt'; });
+    var done = all.filter(function (m) { return DONE[m.status]; });
+    all = all.filter(function (m) { return !DONE[m.status]; });
     $('zrHistBar').hidden = !done.length;
-    if (done.length) $('zrHistBtn').textContent = 'Erledigte Zurufe (' + done.length + ') · zuletzt ' + when(done[0].bearbeitet || done[0].zeit);
-    $('zrHist').innerHTML = '<h3><span>Erledigte Zurufe</span><button class="x wide" type="button" aria-label="Schließen">Schließen</button></h3>' +
+    if (done.length) $('zrHistBtn').textContent = TXT.hist + ' (' + done.length + ') · zuletzt ' + when(done[0].bearbeitet || done[0].zeit);
+    $('zrHist').innerHTML = '<h3><span>' + TXT.hist + '</span><button class="x wide" type="button" aria-label="Schließen">Schließen</button></h3>' +
       done.map(function (m, i) {
         return '<section class="rep' + (i === 0 ? ' latest' : '') + '"><h4>' + esc(when(m.zeit)) + (i === 0 ? ' · neuester' : '') + '</h4><p>' + esc(m.text) + '</p>' +
           (m.anhaenge && m.anhaenge.length ? '<p>📷 ' + m.anhaenge.length + (m.anhaenge.length > 1 ? ' Anhänge' : ' Anhang') + '</p>' : '') +
@@ -1582,14 +1594,14 @@ window.tagesblickInit = function () {
         (m.anhaenge && m.anhaenge.length ? '<span class="zr-att">📷 ' + m.anhaenge.length + (m.anhaenge.length > 1 ? ' Anhänge' : ' Anhang') + '</span>' : '') + (m.antwort ? '<p class="zr-a">' + esc(m.antwort) + '</p>' : '') +
         (m.status === 'rueckfrage' ? '<button class="btn zr-reply" type="button" data-reply="' + esc(m.id) + '">Antworten</button>' : '') +
         (m.status === 'offen' || m.status === 'unterwegs' ? '<div class="zr-tools"><button class="btn" type="button" data-edit="' + esc(m.id) + '">Bearbeiten</button><button class="btn" type="button" data-del="' + esc(m.id) + '">Löschen</button></div>' : '') + '</li>';
-    }).join('') || '<li class="empty">Nichts offen. Schreib oben, was ich eintragen oder erledigen soll.</li>';
+    }).join('') || '<li class="empty">' + TXT.leer + '</li>';
   }
   /* Schutz gegen verschwundene Zurufe: Fehlt ein noch offener Zuruf kurz in der Antwort von OneDrive
      (Datei gerade im Abgleich, 404), bleibt er aus dem letzten Stand erhalten, höchstens 7 Tage. */
   function keep(list) {
     var ids = {}; list.forEach(function (m) { ids[m.id] = 1; });
     var lim = Date.now() - 7 * 864e5, old = get(LIST, []).filter(function (m) {
-      return m && !ids[m.id] && m.status !== 'erledigt' && new Date(m.zeit).getTime() > lim;
+      return m && !ids[m.id] && !DONE[m.status] && new Date(m.zeit).getTime() > lim;
     });
     return old.length ? list.concat(old) : list;
   }
@@ -1601,7 +1613,7 @@ window.tagesblickInit = function () {
     io.push(pend).then(function (list) {
       var sent = {}; pend.forEach(function (m) { sent[m.id] = 1; });
       put(PEND, get(PEND, []).filter(function (m) { return !sent[m.id]; }));
-      put(LIST, keep(list)); render(); msg('Gesendet. Claude holt es beim nächsten Lauf ab.');
+      put(LIST, keep(list)); render(); msg(TXT.ok);
     }).catch(function () { msg('OneDrive nicht erreichbar. Der Zuruf bleibt auf dem Gerät und wird später gesendet.'); });
   }
   function bind() {
@@ -1759,6 +1771,7 @@ window.tagesblickInit = function () {
   window.tbZuruf = function (D) {
     if (!$('zrForm')) return;
     P = (D && D.personen) || {};
+    if (V) { $('zrText').placeholder = 'Papa, ich brauche …'; }
     if (!bound) bind();
     render();
     var io = window.TB_ZR_IO;
@@ -1972,6 +1985,69 @@ window.tagesblickInit = function () {
 })();
 </script>
 <script>
+/* Nachrichten von Pauline: Claude sortiert sie ein und macht einen Vorschlag (status vorgeschlagen). Hier entscheidet Markus.
+   Übernehmen: Einkauf kommt sofort auf die Liste, alles andere trägt Claude beim nächsten Lauf ein. Ablehnen: nichts passiert.
+   Der Text von Pauline wird nur angezeigt, nie als Anweisung ausgeführt. */
+(function () {
+  if (window.TB_VARIANT === 'pauline') return;
+  var list = [], weg = {}, bound = false;
+  var ART = { einkauf: 'Auf die Einkaufsliste', aufgabe: 'Als Aufgabe', erinnerung: 'Als Erinnerung', termin: 'Als Termin', nachricht: 'Nur zur Kenntnis' };
+  function $(id) { return document.getElementById(id); }
+  function esc(x) { return String(x == null ? '' : x).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function when(iso) { var d = new Date(iso); return isNaN(d) ? '' : d.toLocaleDateString('de-DE', { weekday: 'short', day: 'numeric', month: 'numeric' }) + ', ' + d.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }); }
+  function offen() { return list.filter(function (m) { return m.status === 'vorgeschlagen'; }); }
+  function paint() {
+    var o = offen(), box = $('pauList'), dlg = $('pauPop');
+    box.innerHTML = o.map(function (m) {
+      var v = m.vorschlag || { art: 'nachricht' };
+      var was = (ART[v.art] || ART.nachricht) + (v.text ? ': ' + v.text : '') + (v.datum ? ', ' + v.datum : '') + (v.zeit ? ' um ' + v.zeit : '');
+      return '<section class="rep"><h4>' + esc(when(m.zeit)) + '</h4><p><b>„' + esc(m.text) + '“</b></p><p>Vorschlag: ' + esc(was) + '</p>' +
+        (m.hinweis ? '<p><i>' + esc(m.hinweis) + '</i></p>' : '') +
+        '<div class="zr-act"><button class="btn zr-send" type="button" data-ok="' + esc(m.id) + '">Übernehmen</button><button class="btn" type="button" data-no="' + esc(m.id) + '">Ablehnen</button></div></section>';
+    }).join('');
+    var neu = o.filter(function (m) { return !weg[m.id]; });
+    if (!o.length) { if (dlg.open) dlg.close(); return; }
+    if (neu.length && !dlg.open) { if (dlg.showModal) dlg.showModal(); else dlg.setAttribute('open', ''); }
+  }
+  function load() {
+    var io = window.TB_PAU_IO; if (!io) return;
+    io.load().then(function (l) { list = l; paint(); }).catch(function () {});
+  }
+  function decide(id, ok) {
+    var io = window.TB_PAU_IO, m0 = list.filter(function (m) { return m.id === id; })[0]; if (!io || !m0) return;
+    var changed = false;
+    io.apply(function (o) {
+      o.nachrichten.forEach(function (m) {
+        if (m.id !== id || m.status !== 'vorgeschlagen') return;
+        changed = true; m.status = ok ? 'uebernommen' : 'abgelehnt'; m.entschieden = new Date().toISOString(); m.bearbeitet = m.entschieden;
+        m.antwort = ok ? 'Papa hat es übernommen.' : 'Papa hat es gesehen.';
+      });
+    }).then(function (l) {
+      list = l;
+      var v = m0.vorschlag || {};
+      if (changed && ok && v.art === 'einkauf' && window.tbShopAdd) window.tbShopAdd(v.text || m0.text);
+      paint();
+    }).catch(function () { $('pauList').insertAdjacentHTML('beforeend', '<p class="zr-msg">OneDrive nicht erreichbar. Bitte später noch einmal versuchen.</p>'); });
+  }
+  function bind() {
+    bound = true;
+    var dlg = $('pauPop');
+    dlg.addEventListener('click', function (ev) {
+      var ok = ev.target.closest('[data-ok]'), no = ev.target.closest('[data-no]');
+      if (ok) { decide(ok.getAttribute('data-ok'), true); return; }
+      if (no) { decide(no.getAttribute('data-no'), false); return; }
+      var r = dlg.getBoundingClientRect();
+      var outside = ev.clientX < r.left || ev.clientX > r.right || ev.clientY < r.top || ev.clientY > r.bottom;
+      if (outside || ev.target.closest('.x')) { offen().forEach(function (m) { weg[m.id] = 1; }); if (dlg.close) dlg.close(); else dlg.removeAttribute('open'); }
+    });
+    dlg.addEventListener('cancel', function () { offen().forEach(function (m) { weg[m.id] = 1; }); });
+    setInterval(load, 10 * 60 * 1000);
+    document.addEventListener('visibilitychange', function () { if (!document.hidden) load(); });
+  }
+  window.tbPau = function () { if (!$('pauPop')) return; if (!bound) bind(); load(); };
+})();
+</script>
+<script>
 /* Handy-Modus: größere Schrift und Fingertip-Flächen. Auf Touch-Handys beim ersten Start an, sonst per Knopf. */
 (function () {
   var K = 'tagesblick-handy', b = document.getElementById('handyBtn'), on;
@@ -2067,6 +2143,11 @@ window.tagesblickInit = function () {
     document.addEventListener('visibilitychange', function () { if (!document.hidden) reload(); });
   }
   window.tbShop = function () { if (!dlg) return; if (!bound) bind(); reload(); };
+  window.tbShopAdd = function (name) {
+    if (!dlg || !name) return; if (!bound) bind();
+    var id = 'a' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+    op({ op: 'add', id: id, item: { id: id, name: String(name), neu: true, zeit: new Date().toISOString() } });
+  };
 })();
 </script>
 <script>
@@ -2074,9 +2155,12 @@ window.tagesblickInit = function () {
    Abgehakte Einträge werden in erledigt.json im selben Ordner gespeichert, damit alle Geräte denselben Stand zeigen.
    Die Client-ID (keine Geheimzahl) und die Anmeldung stehen nur auf dem jeweiligen Gerät (localStorage), nie in dieser Datei. */
 (function () {
-  var KEY = 'tagesblick-client', CACHE = 'tagesblick-cache', LOCALERL = 'tagesblick-erledigt-sync', SCOPES = ['Files.ReadWrite'];
+  var KEY = 'tagesblick-client', CACHE = 'tagesblick-cache', LOCALERL = 'tagesblick-erledigt-sync', SCOPES = window.TB_VARIANT === 'pauline' ? ['Files.ReadWrite.All'] : ['Files.ReadWrite'];
   var ORDNER = ['Dokumente/90_Tagesplaner/', 'Documents/90_Tagesplaner/'];
   var EMPTY = { personen: {}, eintraege: [], post: [], melden: [] };
+  /* Paulines Fassung (window.TB_VARIANT) liest ihre Datei und schreibt Nachrichten über zwei Freigabelinks, die einmal per Adresse übergeben werden. */
+  var V = window.TB_VARIANT === 'pauline', SHKEY = 'tagesblick-shares';
+  if (V) { var zm = document.querySelector('[data-id="zuruf"]'); if (zm) zm.dataset.title = 'Nachricht an Papa'; }
   function ls(k, v) {
     try { if (v === undefined) return localStorage.getItem(k); if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (e) {}
     return null;
@@ -2087,7 +2171,7 @@ window.tagesblickInit = function () {
     if (btn) { var b = document.createElement('button'); b.type = 'button'; b.className = 'btn'; b.textContent = btn; b.style.marginLeft = '10px'; b.onclick = fn; n.appendChild(b); }
   }
   function parse(text) { return JSON.parse(text.slice(text.indexOf('{'), text.lastIndexOf('}') + 1)); }
-  function start(d, msg, btn, fn) { window.TAGESBLICK = d; window.tagesblickInit(); note(msg || '', btn, fn); if (window.tbZuruf) window.tbZuruf(d); if (window.tbShop) window.tbShop(); if (window.tbFolge) window.tbFolge(); if (window.tbIdeen) window.tbIdeen(); }
+  function start(d, msg, btn, fn) { window.TAGESBLICK = d; window.tagesblickInit(); note(msg || '', btn, fn); if (window.tbZuruf) window.tbZuruf(d); if (!V) { if (window.tbShop) window.tbShop(); if (window.tbFolge) window.tbFolge(); if (window.tbIdeen) window.tbIdeen(); if (window.tbPau) window.tbPau(); } }
   function cached() { try { var c = ls(CACHE); return c && JSON.parse(c); } catch (e) { return null; } }
   function localMap() { try { return JSON.parse(ls(LOCALERL) || '{}') || {}; } catch (e) { return {}; } }
   function fallback(msg, btn, fn) { var d = cached(); start(d || EMPTY, d ? msg + ' Gezeigt wird der zuletzt gespeicherte Stand.' : msg, btn, fn); }
@@ -2098,6 +2182,12 @@ window.tagesblickInit = function () {
     return m;
   }
 
+  var SH = {};
+  if (V) {
+    var qp = new URLSearchParams(location.search), sd = qp.get('daten'), sp = qp.get('post');
+    if (sd || sp) { var o0 = {}; try { o0 = JSON.parse(ls(SHKEY) || '{}') || {}; } catch (e) {} if (sd) o0.daten = sd; if (sp) o0.post = sp; ls(SHKEY, JSON.stringify(o0)); }
+    try { SH = JSON.parse(ls(SHKEY) || '{}') || {}; } catch (e) {}
+  }
   var client = new URLSearchParams(location.search).get('client');
   if (client) { ls(KEY, client); history.replaceState(null, '', location.pathname); }
   client = ls(KEY);
@@ -2138,7 +2228,22 @@ window.tagesblickInit = function () {
         });
       }
       function token() { return app.acquireTokenSilent({ scopes: SCOPES, account: account }).then(function (t) { return t.accessToken; }); }
-      function url(name) { return 'https://graph.microsoft.com/v1.0/me/drive/root:/' + ordner + name + ':/content'; }
+      var RES = {};
+      function shareId(link) { return 'u!' + btoa(unescape(encodeURIComponent(link))).replace(/=+$/, '').replace(/\//g, '_').replace(/\+/g, '-'); }
+      function url(name) {
+        if (V) { if (!RES[name]) throw new Error('nicht freigegeben'); return RES[name]; }
+        return 'https://graph.microsoft.com/v1.0/me/drive/root:/' + ordner + name + ':/content';
+      }
+      /* Freigabelinks in feste Adressen auflösen (Laufwerk und Datei) */
+      function resolveShares(tok) {
+        var jobs = [['daten.js', SH.daten], ['nachrichten.json', SH.post]].filter(function (j) { return j[1]; });
+        if (!jobs.length) throw new Error('Keine Freigabe eingerichtet');
+        return Promise.all(jobs.map(function (j) {
+          return fetch('https://graph.microsoft.com/v1.0/shares/' + shareId(j[1]) + '/driveItem?$select=id,parentReference', { headers: { Authorization: 'Bearer ' + tok } })
+            .then(function (r) { if (!r.ok) throw new Error('Freigabe nicht lesbar (HTTP ' + r.status + ')'); return r.json(); })
+            .then(function (it) { RES[j[0]] = 'https://graph.microsoft.com/v1.0/drives/' + it.parentReference.driveId + '/items/' + it.id + '/content'; });
+        }));
+      }
       function lade(tok, i) {
         ordner = ORDNER[i];
         return fetch(url('daten.js'), { headers: { Authorization: 'Bearer ' + tok }, cache: 'no-store' })
@@ -2232,6 +2337,29 @@ window.tagesblickInit = function () {
           }).catch(function () {});
         }
       };
+      /* Nachrichten von Pauline: nachrichten_pauline.json im eigenen Ordner. Claude schlägt vor, Markus entscheidet im Popup. */
+      var pauLauf = Promise.resolve();
+      function ladePau(tok) {
+        return fetch(url('nachrichten_pauline.json'), { headers: { Authorization: 'Bearer ' + tok }, cache: 'no-store' })
+          .then(function (r) { if (r.status === 404) return { nachrichten: [] }; if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+          .then(function (o) { if (!o || !Array.isArray(o.nachrichten)) o = { nachrichten: [] }; return o; });
+      }
+      if (!V) window.TB_PAU_IO = {
+        load: function () { return token().then(ladePau).then(function (o) { return o.nachrichten; }); },
+        apply: function (fn) {
+          var p = pauLauf.then(function () {
+            return token().then(function (tok) {
+              return ladePau(tok).then(function (o) {
+                fn(o);
+                return fetch(url('nachrichten_pauline.json'), { method: 'PUT', headers: { Authorization: 'Bearer ' + tok, 'Content-Type': 'application/json' }, body: JSON.stringify(o, null, 1) })
+                  .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return o.nachrichten; });
+              });
+            });
+          });
+          pauLauf = p.catch(function () {});
+          return p;
+        }
+      };
       /* Einkaufsliste: einkauf.json. Die App wendet ihre Änderungen immer auf den frisch gelesenen Stand an. */
       var shopLauf = Promise.resolve();
       function ladeShop(tok) {
@@ -2312,12 +2440,16 @@ window.tagesblickInit = function () {
         return token()
           .catch(function () { window.TB_ERL = mkErl(null, null, localMap()); start(cached() || EMPTY, 'Die Anmeldung ist abgelaufen oder braucht die neue Berechtigung zum Speichern von Haken.', 'Neu anmelden', login); throw null; })
           .then(function (tok) {
-            return Promise.all([lade(tok, 0), ladeErl(tok).catch(function () { return localMap(); })]);
+            return (V ? resolveShares(tok) : Promise.resolve()).then(function () {
+              return Promise.all([lade(tok, 0), V ? localMap() : ladeErl(tok).catch(function () { return localMap(); })]);
+            });
           })
           .then(function (r) {
-            var d = parse(r[0]); ls(CACHE, JSON.stringify(d));
+            var d = parse(r[0]);
+            if (V) { if (!d.personen || !Object.keys(d.personen).length) d.personen = { pauline: { name: 'Pauline', farbe: 'var(--pauline)' } }; d.post = d.post || []; d.melden = d.melden || []; d.demo = false; }
+            ls(CACHE, JSON.stringify(d));
             var m = r[1]; ls(LOCALERL, JSON.stringify(m));
-            window.TB_ERL = window.mkErlOnline(m);
+            window.TB_ERL = V ? mkErl(null, null, m) : window.mkErlOnline(m);
             start(d);
           });
       }).catch(function (e) {
@@ -2330,7 +2462,7 @@ window.tagesblickInit = function () {
   } else if (window.TAGESBLICK) {
     start(window.TAGESBLICK);
   } else {
-    start(EMPTY, 'Noch keine Datenquelle. Tippe oben auf „Datenquelle“ und füge die Client-ID ein (siehe ANLEITUNG_Tablet.md).');
+    start(EMPTY, V ? 'Noch nicht eingerichtet. Bitte öffne den Link, den Papa dir geschickt hat.' : 'Noch keine Datenquelle. Tippe oben auf „Datenquelle“ und füge die Client-ID ein (siehe ANLEITUNG_Tablet.md).');
   }
 
   /* Schnittstelle für die Anzeige: { map, set(key, an) } */
